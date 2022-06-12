@@ -15,7 +15,6 @@ class Server_DRD(BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html")
             self.end_headers()
 
-            # Send HTML Page response
             self.wfile.write(bytes(
                 """<html>
                     <head>
@@ -31,31 +30,63 @@ class Server_DRD(BaseHTTPRequestHandler):
             self.send_header("Content-type", "text/html")
             self.end_headers()
 
-            # Send HTML Page response
-            self.wfile.write(bytes(
-                """<html>
-                    <head>
-                        <title>Domain ReDirector - String Convertor</title>
-                    </head>
-                    <body>
-                        <p>This page converts strings.</p>
-                    </body>
-                </html>""", "utf-8"))
+            # Process string
+            s = args[1]
+            if s.isalpha():
+                num = src.stoid.stoid(s.upper())
+
+                self.wfile.write(bytes(
+                    """<html>
+                        <head>
+                            <title>Domain ReDirector - String Convertor</title>
+                        </head>
+                        <body>
+                            <p>Your string: %s</p>
+                            <p>Its ID: %d</p>
+                        </body>
+                    </html>""" % (s, num), "utf-8"))
+            else:
+                self.wfile.write(bytes(
+                    """<html>
+                        <head>
+                            <title>Domain ReDirector - String Convertor</title>
+                        </head>
+                        <body>
+                            <p>The given string is not valid.</p>
+                        </body>
+                    </html>""", "utf-8"))
+
         elif args[0] == "idtos" and len(args) == 2:
+            # Send HTTP response
             self.send_response(200)
             self.send_header("Content-type", "text/html")
             self.end_headers()
 
-            # Send HTML Page response
-            self.wfile.write(bytes(
-                """<html>
-                    <head>
-                        <title>Domain ReDirector - ID Convertor</title>
-                    </head>
-                    <body>
-                        <p>This page converts IDs.</p>
-                    </body>
-                </html>""", "utf-8"))
+            # Process ID
+            num = args[1]
+            if num.isdigit():
+                s = src.stoid.idtos(int(num))
+
+                self.wfile.write(bytes(
+                    """<html>
+                        <head>
+                            <title>Domain ReDirector - ID Convertor</title>
+                        </head>
+                        <body>
+                            <p>Your ID: %d</p>
+                            <p>Its string: %s</p>
+                        </body>
+                    </html>""" % (int(num), s), "utf-8"))
+            else:
+                self.wfile.write(bytes(
+                    """<html>
+                        <head>
+                            <title>Domain ReDirector - ID Convertor</title>
+                        </head>
+                        <body>
+                            <p>The given ID is not valid.</p>
+                        </body>
+                    </html>""", "utf-8"))
         else:
             self.send_response(200)
             self.send_header("Content-type", "text/html")
