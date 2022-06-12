@@ -44,7 +44,7 @@ class Server_DRD(BaseHTTPRequestHandler):
                             <p>Your string: %s</p>
                             <p>Its ID: %d</p>
                         </body>
-                    </html>""" % (s, num), "utf-8"))
+                    </html>""" % (s.upper(), int(num)), "utf-8"))
             else:
                 self.wfile.write(bytes(
                     """<html>
@@ -76,7 +76,7 @@ class Server_DRD(BaseHTTPRequestHandler):
                             <p>Your ID: %d</p>
                             <p>Its string: %s</p>
                         </body>
-                    </html>""" % (int(num), s), "utf-8"))
+                    </html>""" % (int(num), s.upper()), "utf-8"))
             else:
                 self.wfile.write(bytes(
                     """<html>
