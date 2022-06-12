@@ -1,4 +1,4 @@
-from server import Server_DRD
+from src.server import Server_DRD
 from http.server import HTTPServer
 
 
@@ -7,8 +7,8 @@ def main():
     name = "localhost"
     port = 8080
 
-    ws = HTTPServer((name,port), Server_DRD)
-    print("Server started at http://%s on port %s." % (name,port))
+    ws = HTTPServer((name, port), Server_DRD)
+    print("Server started at http://%s on port %s." % (name, port))
 
     try:
         ws.serve_forever()
