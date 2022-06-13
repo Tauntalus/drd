@@ -1,42 +1,62 @@
 from http.server import BaseHTTPRequestHandler
 import src.stoid
+import src.database
 
 
 # Server_DRD: Custom WebServer for Domain ReDirector
 class Server_DRD(BaseHTTPRequestHandler):
-    internal_db = {}
-    def send_ok_header(self):
-        self.send_response(200)
+    internal_db = src.database.LinkDB()
+
+    # send_page: accepts a response code, page title, and page body
+    # then sends a well-formatted HTML response to the requester
+    def send_page(self, code, title, page):
+        self.send_response(code)
         self.send_header("Content-type", "text/html")
         self.end_headers()
 
-    # send_head_html: Send the header information for the HTML page.
-    def send_head_html(self, name):
+        self.wfile.write(bytes("<html>", "utf-8"))
         self.wfile.write(bytes(
             """<head>
                 <title>%s</title>
-            </head>""" % name, "utf-8"))
-
-    def send_home_page(self):
-        self.send_ok_header()
-
-        self.wfile.write(bytes("<html>", "utf-8"))
-        self.send_head_html("Domain ReDirector - Main Page")
+            </head>""" % title, "utf-8"))
         self.wfile.write(bytes(
             """<body>
-                <p>This is the home page.</p>
-                <p>Thank you for visiting.</p>
-            </body>""", "utf-8"))
-        self.wfile.write(bytes("<html>", "utf-8"))
+                %s
+            </body>""" % page, "utf-8"))
+        self.wfile.write(bytes("</html>", "utf-8"))
+        return
 
-    def do_GET(self): # TODO: Transform into a link lookup
+    # do_GET: GET request handler
+    # TODO: Move HTML pages to external resource
+    def do_GET(self):
 
         # This line gets the path as a list of arguments,
         # Stripping off the leading slash
         args = self.path[1:].split('/')
 
-        if args[0] == '' and len(args) == 1:
-            self.send_home_page()
+        if args[0] == "api" and len(args) > 1:
+            return
+
+        if args[0] == '':
+            self.send_page(200, "Domain ReDirector - Main Page",
+
+                           """<h1>DRD - Domain ReDirector</h1></br>
+                           <p>This is the home page.</p>
+                           <p>Thank you for visiting.</p>""")
+
+        elif args[0] == "register":
+            self.send_page(200, "Domain ReDirector - Register a Link",
+
+                           """<h1>Register a New Link</h1></br>
+                           <form method="POST" action="api/register">
+                            <div>
+                                <label for="new_link">Link to register: </label>
+                                <input type="text" id="new_link" name="new_link" required>
+                            </div>
+                            <div>
+                                <input type=submit value="Register">
+                            </div>
+                           </form>""")
 
         elif args[0] == "stoid" and len(args) == 2:
             self.send_ok_header()
@@ -53,7 +73,6 @@ class Server_DRD(BaseHTTPRequestHandler):
                         <p>Your string: %s</p>
                         <p>Its ID: %d</p>
                     </body>""" % (s.upper(), int(num)), "utf-8"))
-
 
             else:
                 self.wfile.write(bytes(
@@ -95,3 +114,9 @@ class Server_DRD(BaseHTTPRequestHandler):
                     <p>This page does nothing.</p>
                 </body>""", "utf-8"))
             self.wfile.write(bytes("</html>", "utf-8"))
+
+    # do_POST: POST request handler
+    # TODO: Move HTML pages to external resource
+    def do_POST(self):
+        args = self.path[1:].split('/')
+        return
