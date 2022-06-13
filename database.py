@@ -10,7 +10,7 @@ class LinkDB:
     max_fail = 5
 
     # add_rand: Add a new link to the database with a random ID
-    # Returns ID if successful, -1 if fail
+    # Returns ID of link if successful, -1 if fail
     def add_rand(self, link):
         if link in self.db.values():
             val = [key for key, value in self.db if value == link]
@@ -30,7 +30,7 @@ class LinkDB:
                 return new_id
 
     # add_with_id: Add a new link with a specific ID
-    # Returns ID if successful, -1 if fail
+    # Returns ID of link if successful, -1 if fail
     def add_with_id(self, link, link_id):
         if self.db[link_id]:
             return -1
@@ -39,7 +39,7 @@ class LinkDB:
             return link_id
 
     # remove_by_id: Removes an item with a specific ID
-    # Returns ID if successful, -1 if fail
+    # Returns ID of link if successful, -1 if fail
     def remove_by_id(self, link_id):
         if self.db[link_id]:
             del self.db[link_id]
@@ -47,6 +47,8 @@ class LinkDB:
         else:
             return -1
 
+    # remove_by_link: Removes a specific link from the DB
+    # Returns ID of link if successful, -1 if fail
     def remove_by_link(self, link):
         if link in self.db.values():
             val = [key for key, value in self.db if value == link]
@@ -56,6 +58,8 @@ class LinkDB:
         else:
             return -1
 
+    # update_by_id: updates an ID with a new link.
+    # Returns ID of link if successful, -1 if fail
     def update_by_id(self, link_id, new_link):
         if self.db[link_id] and new_link not in self.db.values():
             self.db[link_id] = new_link
@@ -66,12 +70,16 @@ class LinkDB:
         else:
             return -1
 
+    # get_link_by_id: Returns the DB entry for a given ID
+    # returns the link, or None if no matching ID is found.
     def get_link_by_id(self, link_id):
         return self.db[link_id]
 
+    # get_id_by_link: Returns the ID for a given link
+    # returns the ID, or None if no matching link is found.
     def get_id_by_link(self, link):
         if link in self.db.values():
-            val = [key for key, value in self.db if value == new_link]
+            val = [key for key, value in self.db if value == link]
             return val[0]
         else:
             return None
