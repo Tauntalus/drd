@@ -97,39 +97,6 @@ class Server_DRD(BaseHTTPRequestHandler):
                            </form>""" % (self.internal_db.char_limit, self.internal_db.char_limit, self.internal_db.char_limit))
             return
 
-        elif args[0] == "stoid" and len(args) == 2:
-
-            # Process string
-            s = args[1]
-            if s.isalpha():
-                num = stoid(s.upper())
-
-                self.send_page(200, "Domain ReDirector - String Converter",
-                               """<p>Your string: %s</p>
-                               <p>Its ID: %d</p>""" % (s.upper(), int(num)))
-                return
-
-            else:
-                self.send_page(200, "Domain ReDirector - String Conversion Error",
-                               """<p>The given string is not valid.</p>""")
-                return
-
-        elif args[0] == "idtos" and len(args) == 2:
-
-            # Process ID
-            num = args[1]
-            if num.isdigit():
-                s = idtos(int(num))
-
-                self.send_page(200, "Domain ReDirector - ID Converter",
-                               """<p>Your ID: %d</p>
-                               <p>Its string: %s</p>""" % (int(num), s.upper()))
-                return
-            else:
-                self.send_page(200, "Domain ReDirector - ID Conversion Error",
-                               """<p>The given ID is not valid.</p>""")
-                return
-
         # Redirection handler
         else:
             if args[0].isalpha() and len(args[0]) <= self.internal_db.char_limit:
