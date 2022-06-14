@@ -87,14 +87,18 @@ class Server_DRD(BaseHTTPRequestHandler):
                                 <input type="url" id="link" name="link" required>
                             </div>
                             <div>
-                                <label for="ext">5-letter ID: </label>
+                                <label for="ext">%d-letter ID: </label>
                                 <input type="text" id="ext" name="ext" 
                                 minlength=%d maxlength=%d pattern="[A-Za-z]{%d}" required>
                             </div>
                             <div>
                                 <input type=submit value="Register">
                             </div>
-                           </form>""" % (self.internal_db.char_limit, self.internal_db.char_limit, self.internal_db.char_limit))
+                           </form>""" % (self.internal_db.char_limit, self.internal_db.char_limit, self.internal_db.char_limit, self.internal_db.char_limit))
+            return
+
+        elif args[0] == "teapot":
+            self.send_error(418)
             return
 
         # Redirection handler
@@ -102,12 +106,8 @@ class Server_DRD(BaseHTTPRequestHandler):
             if args[0].isalpha() and len(args[0]) <= self.internal_db.char_limit:
                 link_id = stoid(args[0])
                 link = self.internal_db.get_link_by_id(link_id)
-                print(link)
                 self.redirect(301, link)
                 return
-
-
-
 
     # do_POST: POST request handler
     # TODO: Move HTML pages to external resource
@@ -116,7 +116,7 @@ class Server_DRD(BaseHTTPRequestHandler):
 
         if args[0] == "register-complete":
             form_dict = self.process_form()
-            link = form_dict["link"]
+            link = str(unquote(form_dict["link"]))
 
             if self.internal_db.get_id_by_link(link):
                 self.redirect(308, "already-registered")
@@ -181,3 +181,31 @@ class Server_DRD(BaseHTTPRequestHandler):
                            """<h1>Your ID Was Already Taken.</h1></br>
                            <p>Your chosen ID (%s) was already registered in our database.</p>""" % cur_ext)
             return
+
+    # send_error: Hard Error Handler
+    #
+    def send_error(self, code, message=None, explain=None):
+        if code == 404:
+            self.send_page(404, "Domain ReDirector - Page Not Found",
+                           """<h1>Page Not Found</h1>
+                           <p>This URL doesn't go anywhere, sadly.</p>
+                           <a href=http://localhost:8080/>Main Page</a>""")
+        elif code == 418:
+            self.send_page(404, "Domain ReDirector - ???",
+                           """<h1>I'm A Teapot!</h1>
+                           <a href=http://localhost:8080/>Main Page</a>""")
+            return
+        elif code == 500:
+            self.send_page(404, "Domain ReDirector - Server Error",
+                           """<h1>Server Error</h1>
+                           <p>Something has gone wrong on our end. Sorry about that.</p>
+                           <a href=http://localhost:8080/>Main Page</a>""")
+            return
+        elif code == 502:
+            self.send_page(404, "Domain ReDirector - Bad Gateway",
+                           """<h1>Bad Gateway!</h1>
+                           <p>Bad! Bad Gateway! Don't do that!</p>
+                           <a href=http://localhost:8080/>Main Page</a>""")
+            return
+        else:
+            BaseHTTPRequestHandler.send_error(code, message, explain)
