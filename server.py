@@ -14,7 +14,7 @@ class Server_DRD(BaseHTTPRequestHandler):
         <title>{} - Error %(code)d</title>
     </head>
     <body>
-        <h1>%(message)s</h1>
+        <h2>%(message)s</h2>
         <p>%(explain)s</p>
         <a href="/">Main Page</a>
     </body>""".format(name)
@@ -41,6 +41,9 @@ class Server_DRD(BaseHTTPRequestHandler):
         self.wfile.write(bytes(
             """<body>
                 %(body)s
+                <div>
+                    <a href="/" class="button">Home Page</a>
+                </div>
             </body>""" % {"body": page}, "utf-8"))
         self.wfile.write(bytes("</html>", "utf-8"))
         return
@@ -74,7 +77,7 @@ class Server_DRD(BaseHTTPRequestHandler):
         if args[0] == '':
             self.send_page(200, "Main Page",
 
-                           """<h1>DRD - Domain ReDirector</h1></br>
+                           """<h2>DRD - Domain ReDirector</h2></br>
                            <p>This is the home page.</p>
                            <p>Thank you for visiting.</p>""")
             return
@@ -82,7 +85,7 @@ class Server_DRD(BaseHTTPRequestHandler):
         elif args[0] == "register":
             self.send_page(200, "Register a Link",
 
-                           """<h1>Register a New Link</h1></br>
+                           """<h2>Register a New Link</h2></br>
                            <form method="POST" action="register-complete">
                             <div>
                                 <label for="link">Link to register: </label>
@@ -97,7 +100,7 @@ class Server_DRD(BaseHTTPRequestHandler):
         elif args[0] == "register-id":
             self.send_page(200, "Register A Link",
 
-                           """<h1>Register a New Link With An ID</h1></br>
+                           """<h2>Register a New Link With An ID</h2></br>
                            <form method="POST" action="register-id-complete">
                             <div>
                                 <label for="link">Link to register: </label>
@@ -117,7 +120,7 @@ class Server_DRD(BaseHTTPRequestHandler):
         elif args[0] == "remove":
             self.send_page(200, "Remove A Link",
 
-                           """<h1>Remove An Existing Link</h1></br>
+                           """<h2>Remove An Existing Link</h2></br>
                            <div>
                             <p>Please understand that any short links for this link will
                             no longer work after removal.</p>
@@ -136,7 +139,7 @@ class Server_DRD(BaseHTTPRequestHandler):
         elif args[0] == "remove-id":
             self.send_page(200, "Remove An ID",
 
-                           """<h1>Remove An Existing ID</h1></br>
+                           """<h2>Remove An Existing ID</h2></br>
                            <div>
                             <p>Please understand that the shortlink %(link)s will
                             no longer work after removal.</p>
@@ -149,6 +152,56 @@ class Server_DRD(BaseHTTPRequestHandler):
                             </div>
                             <div>
                                 <input type=submit value="Remove">
+                            </div>
+                           </form>"""
+                           % {"link": self.get_server_address() + "/<ID>", "lim": self.internal_db.char_limit})
+            return
+
+        elif args[0] == "update":
+            self.send_page(200, "Update A Link",
+
+                           """<h2>Update An Existing Link</h2></br>
+                           <div>
+                            <p>Please understand that any short links for this link will
+                            no longer work after update.</p>
+                           </div>
+                           <form method="POST" action="update-complete">
+                            <div>
+                                <label for="link">Link to update: </label>
+                                <input type="url" id="link" name="link" required>
+                            </div>
+                            <div>
+                                <label for="ext">New %(lim)d-letter ID: </label>
+                                <input type="text" id="ext" name="ext" 
+                                minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
+                            </div>
+                            <div>
+                                <input type=submit value="Update">
+                            </div>
+                           </form>"""
+                           % {"lim": self.internal_db.char_limit})
+            return
+
+        elif args[0] == "update-id":
+            self.send_page(200, "Update An ID",
+
+                           """<h2>Remove An Existing ID</h2></br>
+                           <div>
+                            <p>Please understand that the shortlink %(link)s will
+                            point to the new location after update.</p>
+                           </div>
+                           <form method="POST" action="update-id-complete">
+                            <div>
+                                <label for="ext">%(lim)d-letter ID: </label>
+                                <input type="text" id="ext" name="ext" 
+                                minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
+                            </div>
+                            <div>
+                                <label for="link">New link: </label>
+                                <input type="url" id="link" name="link" required>
+                            </div>
+                            <div>
+                                <input type=submit value="Update">
                             </div>
                            </form>"""
                            % {"link": self.get_server_address() + "/<ID>", "lim": self.internal_db.char_limit})
@@ -193,11 +246,12 @@ class Server_DRD(BaseHTTPRequestHandler):
             link_ext = idtos(new_id)
 
             self.send_page(201, "Registration Complete",
-                           """<h1>Registration Complete!</h1></br>
+                           """<h2>Registration Complete!</h2></br>
                            <p>Thank you! Your link (%(link)s) has been registered!</p>
                            <p>Your new short link is 
                             <a href="%(host)s/%(ext)s">%(host)s/%(ext)s</a>
-                           </p>""" % {"link": link, "host": self.get_server_address(), "ext": link_ext})
+                           </p>"""
+                           % {"link": link, "host": self.get_server_address(), "ext": link_ext})
             return
         elif args[0] == "register-id-complete":
             form_dict = self.process_form()
@@ -213,11 +267,12 @@ class Server_DRD(BaseHTTPRequestHandler):
             if new_id >= 0:
 
                 self.send_page(201, "Registration Complete",
-                               """<h1>Registration Complete!</h1></br>
+                               """<h2>Registration Complete!</h2></br>
                                <p>Thank you! Your link (%(link)s) has been registered with the ID: %(ext)s!</p>
                                <p>Your new short link is 
                             <a href="%(host)s/%(ext)s">%(host)s/%(ext)s</a>
-                           </p>""" % {"link": link, "host": self.get_server_address(), "ext": link_ext})
+                           </p>"""
+                            % {"link": link, "host": self.get_server_address(), "ext": link_ext})
                 return
             elif new_id == -1:
                 self.redirect(308, "id-taken")
@@ -234,11 +289,12 @@ class Server_DRD(BaseHTTPRequestHandler):
 
             if link_id >= 0:
                 self.send_page(201, "Removal Complete",
-                               """<h1>Removal Complete!</h1></br>
+                               """<h2>Removal Complete!</h2></br>
                                <p>The link (%(link)s) has been removed from our database.</p>
                                <div>
                                 <a href="/" class="button">Home Page</a>
-                               </div>""" % {"link": link})
+                               </div>"""
+                               % {"link": link})
                 return
             else:
                 self.redirect(308, "link-not-found")
@@ -252,11 +308,62 @@ class Server_DRD(BaseHTTPRequestHandler):
             old_id = self.internal_db.remove_by_id(link_id)
             if old_id >= 0:
                 self.send_page(201, "Removal Complete",
-                               """<h1>Removal Complete!</h1></br>
+                               """<h2>Removal Complete!</h2></br>
                                <p>The ID (%(ext)s) has been unregistered from our database.</p>
                                <div>
                                 <a href="/" class="button">Home Page</a>
-                               </div>""" % {"ext": link_ext})
+                               </div>"""
+                               % {"ext": link_ext})
+                return
+            elif old_id == -1:
+                self.redirect(308, "id-not-found")
+                return
+            elif old_id == -2:
+                self.redirect(308, "id-invalid")
+                return
+            # TODO: Add 500 server error catch
+
+        elif args[0] == "update-complete":
+            form_dict = self.process_form()
+            link = str(unquote(form_dict["link"]))
+            link_ext = str(form_dict["ext"])
+
+            link_id = stoid(link_ext)
+            new_id = self.internal_db.update_by_link(link, link_id)
+            if new_id >= 0:
+                self.send_page(201, "Update Complete",
+                               """<h2>Update Complete!</h2></br>
+                               <p>The link (%(link)s) has been moved to the address %(addr)s.</p>
+                               <div>
+                                <a href="/" class="button">Home Page</a>
+                               </div>"""
+                               % {"link": link, "addr": self.get_server_address() + "/" + link_ext})
+                return
+            elif new_id == -1:
+                self.redirect(308, "id-taken")
+                return
+            elif link_id == -2:
+                self.redirect(308, "id-invalid")
+                return
+            elif link_id == -3:
+                self.redirect(308, "link-not-found")
+                return
+
+        elif args[0] == "update-id-complete":
+            form_dict = self.process_form()
+            link = str(unquote(form_dict["link"]))
+            link_ext = str(form_dict["ext"])
+
+            link_id = stoid(link_ext)
+            old_id = self.internal_db.update_by_link(link, link_id)
+            if old_id >= 0:
+                self.send_page(201, "Update Complete",
+                               """<h2>Update Complete!</h2></br>
+                               <p>The link (%(link)s) has been moved to the ID: %(ext)s.</p>
+                               <div>
+                                <a href="/" class="button">Home Page</a>
+                               </div>"""
+                               % {"link": link, "ext": link_ext})
                 return
             elif old_id == -1:
                 self.redirect(308, "id-not-found")
@@ -276,15 +383,14 @@ class Server_DRD(BaseHTTPRequestHandler):
             link_ext = idtos(link_id)
 
             self.send_page(201, "Link Already Registered",
-                           """<h1>Your Link Was Already Registered.</h1></br>
+                           """<h2>Your Link Was Already Registered.</h2></br>
                            <p>Your link (%(link)s) has already been registered in our database.</p>
                            <p>Its short link is 
                             <a href="%(host)s/%(ext)s">%(host)s/%(ext)s</a>
                            </p>
-                           <div>
-                            <button onclick="history.back()">Go Back</button>
-                            <a href="/" class="button">Home Page</a>
-                           </div>"""% {"link": link, "host": self.get_server_address(), "ext": link_ext})
+                           <button onclick="history.back()">Go Back</button>
+                            """
+                           % {"link": link, "host": self.get_server_address(), "ext": link_ext})
             return
 
         elif args[0] == "link-not-found":
@@ -292,12 +398,11 @@ class Server_DRD(BaseHTTPRequestHandler):
             link = str(unquote(form_dict["link"]))
 
             self.send_page(201, "Link Not Found",
-                           """<h1>Your Link Was Not Found.</h1></br>
+                           """<h2>Your Link Was Not Found.</h2></br>
                            <p>The link you are trying to modify (%(link)s) does not appear to be in our database.</p>
-                           <div>
-                            <button onclick="history.back()">Go Back</button>
-                            <a href="/" class="button">Home Page</a>
-                           </div>""" % {"link": link})
+                           <button onclick="history.back()">Go Back</button>
+                            """
+                           % {"link": link})
             return
 
         elif args[0] == "id-taken":
@@ -305,13 +410,12 @@ class Server_DRD(BaseHTTPRequestHandler):
             link_ext = str(unquote(form_dict["ext"]))
 
             self.send_page(201, "ID Taken",
-                           """<h1>Your ID Was Already Registered.</h1></br>
+                           """<h2>Your ID Was Already Registered.</h2></br>
                            <p>Your chosen ID (%(ext)s) was already registered
                            in our database. Sorry about that.</p>
-                           <div>
-                            <button onclick="history.back()">Go Back</button>
-                            <a href="/" class="button">Home Page</a>
-                           </div>""" % {"ext": link_ext})
+                           <button onclick="history.back()">Go Back</button>
+                            """
+                           % {"ext": link_ext})
             return
 
         elif args[0] == "id-not-found":
@@ -319,13 +423,12 @@ class Server_DRD(BaseHTTPRequestHandler):
             link_ext = str(unquote(form_dict["ext"]))
 
             self.send_page(201, "ID Not Found",
-                           """<h1>Your ID Was Not Found.</h1></br>
+                           """<h2>Your ID Was Not Found.</h2></br>
                            <p>The ID you are trying to modify (%(ext)s)
                             doesn't seem to exist in our database.</p>
-                           <div>
-                            <button onclick="history.back()">Go Back</button>
-                            <a href="/" class="button">Home Page</a>
-                           </div>""" % {"ext": link_ext})
+                           <button onclick="history.back()">Go Back</button>
+                            """
+                           % {"ext": link_ext})
             return
 
         elif args[0] == "id-invalid":
@@ -333,14 +436,13 @@ class Server_DRD(BaseHTTPRequestHandler):
             link_ext = str(form_dict["ext"])
 
             self.send_page(201, "ID Invalid",
-                           """<h1>Your ID Was Invalid.</h1></br>
+                           """<h2>Your ID Was Invalid.</h2></br>
                            <p>Your chosen ID (%(ext)s) was invalid. It could be that
                             the ID was too long or short, or contained characters
                             other than letters.</p>
-                           <div>
                             <button onclick="history.back()">Go Back</button>
-                            <a href="/" class="button">Home Page</a>
-                           </div>""" % {"ext": link_ext})
+                            """
+                           % {"ext": link_ext})
             return
 
         # If nothing catches a wayward request, send it to the 404 page.

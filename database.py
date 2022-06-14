@@ -68,6 +68,7 @@ class LinkDB:
         else:
             print("DB: Failed to remove link with ID #%(id)d from database: ID not found!"
                   % {"id": link_id})
+            return -1
 
     # remove_by_link: Removes a specific link from the DB
     # Returns ID of link if successful, -X if fail
