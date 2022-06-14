@@ -1,25 +1,29 @@
-from http.server import BaseHTTPRequestHandler, _quote_html
+from http.server import BaseHTTPRequestHandler
 from src.stoid import stoid, idtos
 from src.database import LinkDB
 from urllib.parse import unquote
+
 
 # Server_DRD: Custom WebServer for Domain ReDirector
 class Server_DRD(BaseHTTPRequestHandler):
     internal_db = LinkDB()
 
     error_message_format = """
-    <h1>%s</h1>
-    <p>%s</p>
-    <a href=http://localhost:8080/>Main Page</a>"""
+    <head>
+        <title>Error %(code)d</title>
+    </head>
+    <body>
+        <h1>%(message)s</h1>
+        <p>%(explain)s</p>
+        <a href="/">Main Page</a>
+    </body>"""
 
     # send_page: accepts a response code, page title, and page body
     # then sends a well-formatted HTML response to the requester
-    def send_page(self, code, title, page, err = False):
+    def send_page(self, code, title, page):
         self.send_response(code)
-        if err:
-            self.send_header("Content-type", "text/html")
-        else:
-            self.send_header("Content-type", self.error_content_type)
+        self.send_header("Content-type", "text/html")
+
 
         self.end_headers()
 
@@ -107,9 +111,8 @@ class Server_DRD(BaseHTTPRequestHandler):
 
         elif args[0] == "teapot":
             self.send_error(418,
-                            "???",
                             "I'm a teapot!",
-                            "")
+                            "Short and stout!")
             return
 
         # Redirection handler
@@ -121,12 +124,11 @@ class Server_DRD(BaseHTTPRequestHandler):
                     self.redirect(301, link)
                     return
 
-            self.send_error(404,
-                            "Page Not Found",
-                            "Page Not Found",
-                            "It looks like the page you're looking for doesn't exist.")
-            return
-
+        # If nothing catches a wayward request, send it to the 404 page.
+        self.send_error(404,
+                        "Page Not Found",
+                        "It looks like the page you're looking for doesn't exist.")
+        return
 
     # do_POST: POST request handler
     # TODO: Move HTML pages to external resource
@@ -201,8 +203,8 @@ class Server_DRD(BaseHTTPRequestHandler):
                            <p>Your chosen ID (%s) was already registered in our database.</p>""" % cur_ext)
             return
 
-    # send_error: Hard Error Handler
-    def send_error(self, code, title, header, body):
-        content = self.error_message_format % (header, body)
-        self.send_page(code, title, content, True)
+        # If nothing catches a wayward request, send it to the 404 page.
+        self.send_error(404,
+                        "Page Not Found",
+                        "It looks like the page you're looking for doesn't exist.")
         return
