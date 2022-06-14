@@ -116,8 +116,9 @@ class Server_DRD(BaseHTTPRequestHandler):
             return
 
         # Redirection handler
-        else:
-            if args[0].isalpha() and len(args[0]) <= self.internal_db.char_limit:
+        # If this is a valid short link, and the link exists,
+        # Redirect to the target website
+        elif args[0].isalpha() and len(args[0]) <= self.internal_db.char_limit:
                 link_id = stoid(args[0])
                 link = self.internal_db.get_link_by_id(link_id)
                 if link:
