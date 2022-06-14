@@ -40,8 +40,8 @@ class Server_DRD(BaseHTTPRequestHandler):
         return form_dict
 
     # redirect - Redirects the user to a given location
-    def redirect(self, link):
-        self.send_response(308)
+    def redirect(self, code, link):
+        self.send_response(code)
         self.send_header("location", link)
         self.end_headers()
         return
@@ -52,7 +52,7 @@ class Server_DRD(BaseHTTPRequestHandler):
 
         # This line gets the path as a list of arguments,
         # Stripping off the leading slash
-        args = self.path[1:].split('/')
+        args = str(self.path)[1:].split('/')
 
         if args[0] == '':
             self.send_page(200, "Domain ReDirector - Main Page",
@@ -89,12 +89,12 @@ class Server_DRD(BaseHTTPRequestHandler):
                             <div>
                                 <label for="ext">5-letter ID: </label>
                                 <input type="text" id="ext" name="ext" 
-                                minlength=%d maxlength=%d pattern="[A-Za-z]{5}" required>
+                                minlength=%d maxlength=%d pattern="[A-Za-z]{%d}" required>
                             </div>
                             <div>
                                 <input type=submit value="Register">
                             </div>
-                           </form>""" % (self.internal_db.char_limit, self.internal_db.char_limit))
+                           </form>""" % (self.internal_db.char_limit, self.internal_db.char_limit, self.internal_db.char_limit))
             return
 
         elif args[0] == "stoid" and len(args) == 2:
@@ -130,6 +130,18 @@ class Server_DRD(BaseHTTPRequestHandler):
                                """<p>The given ID is not valid.</p>""")
                 return
 
+        # Redirection handler
+        else:
+            if args[0].isalpha() and len(args[0]) <= self.internal_db.char_limit:
+                link_id = stoid(args[0])
+                link = self.internal_db.get_link_by_id(link_id)
+                print(link)
+                self.redirect(301, link)
+                return
+
+
+
+
     # do_POST: POST request handler
     # TODO: Move HTML pages to external resource
     def do_POST(self):
@@ -140,7 +152,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             link = form_dict["link"]
 
             if self.internal_db.get_id_by_link(link):
-                self.redirect("already-registered")
+                self.redirect(308, "already-registered")
                 return
 
             new_id = self.internal_db.add_rand(link)
@@ -150,7 +162,7 @@ class Server_DRD(BaseHTTPRequestHandler):
                            """<h1>Registration Complete!</h1></br>
                            <p>Thank you! Your link (%s) has been registered!</p>
                            <p>Your new short link is 
-                            <a href="localhost:8080/%s">localhost:8080/%s</a>
+                            <a href="http://localhost:8080/%s">http://localhost:8080/%s</a>
                            </p>""" % (link, new_ext, new_ext))
             return
         elif args[0] == "register-id-complete":
@@ -159,7 +171,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             link_ext = str(form_dict["ext"])
 
             if self.internal_db.get_id_by_link(link):
-                self.redirect("already-registered")
+                self.redirect(308, "already-registered")
                 return
 
             link_id = stoid(link_ext)
@@ -170,15 +182,16 @@ class Server_DRD(BaseHTTPRequestHandler):
                                """<h1>Registration Complete!</h1></br>
                                <p>Thank you! Your link (%s) has been registered with the ID: %s!</p>
                                <p>Your new short link is 
-                                <a href="localhost:8080/%s">localhost:8080/%s</a>
+                                <a href="http://localhost:8080/%s">http://localhost:8080/%s</a>
                                </p>""" % (link, link_ext, link_ext, link_ext))
                 return
             else:
-                self.redirect("id-taken")
+                self.redirect(308, "id-taken")
                 return
 
         # Soft Error Pages
-        # These pages handle "soft errors" - not sever enough to crash, but
+        # These pages handle "soft errors" - not severe enough to crash the server,
+        # but notable enough to deserve a response to the client
         elif args[0] == "already-registered":
             form_dict = self.process_form()
             link = str(unquote(form_dict["link"]))
@@ -189,7 +202,7 @@ class Server_DRD(BaseHTTPRequestHandler):
                            """<h1>Your Link was Already Registered.</h1></br>
                            <p>Your link (%s) has already been registered in our database.</p>
                            <p>Its short link is 
-                            <a href="localhost:8080/%s">localhost:8080/%s</a>
+                            <a href="http://localhost:8080/%s">http://localhost:8080/%s</a>
                            </p>""" % (link, cur_ext, cur_ext))
             return
 
@@ -199,5 +212,5 @@ class Server_DRD(BaseHTTPRequestHandler):
 
             self.send_page(201, "Domain ReDirector - ID Taken",
                            """<h1>Your ID Was Already Taken.</h1></br>
-                           <p>Your chosen ID (%s) was already registered in our database.</p>""" % (cur_ext))
+                           <p>Your chosen ID (%s) was already registered in our database.</p>""" % cur_ext)
             return
