@@ -12,7 +12,7 @@ class Server_DRD(BaseHTTPRequestHandler):
         self.name = name
         self.port = port
 
-        self.server_address = "http://" + str(self.host) + str(self.port)
+        self.server_address = "http://" + str(self.host) + ":" + str(self.port)
         self.error_message_format = """
         <head>
             <title>{} - Error %(code)d</title>
@@ -187,14 +187,14 @@ class Server_DRD(BaseHTTPRequestHandler):
                 return
 
             new_id = self.internal_db.add_rand(link)
-            new_ext = idtos(new_id)
+            link_ext = idtos(new_id)
 
             self.send_page(201, "Registration Complete",
                            """<h1>Registration Complete!</h1></br>
-                           <p>Thank you! Your link (%s) has been registered!</p>
+                           <p>Thank you! Your link (%(link)s) has been registered!</p>
                            <p>Your new short link is 
-                            <a href="http://localhost:8080/%s">http://localhost:8080/%s</a>
-                           </p>""" % (link, new_ext, new_ext))
+                            <a href="%(host)s/%(ext)s">%(host)s/%(ext)s</a>
+                           </p>""" % {"link": link, "host": self.server_address, "ext": link_ext})
             return
         elif args[0] == "register-id-complete":
             form_dict = self.process_form()
@@ -211,10 +211,10 @@ class Server_DRD(BaseHTTPRequestHandler):
 
                 self.send_page(201, "Registration Complete",
                                """<h1>Registration Complete!</h1></br>
-                               <p>Thank you! Your link (%s) has been registered with the ID: %s!</p>
+                               <p>Thank you! Your link (%(link)s) has been registered with the ID: %(ext)s!</p>
                                <p>Your new short link is 
-                                <a href="http://localhost:8080/%s">http://localhost:8080/%s</a>
-                               </p>""" % (link, link_ext, link_ext, link_ext))
+                            <a href="%(host)s/%(ext)s">%(host)s/%(ext)s</a>
+                           </p>""" % {"link": link, "host": self.server_address, "ext": link_ext})
                 return
             else:
                 self.redirect(308, "id-taken")
@@ -235,10 +235,10 @@ class Server_DRD(BaseHTTPRequestHandler):
 
             self.send_page(201, "Link Already Registered",
                            """<h1>Your Link was Already Registered.</h1></br>
-                           <p>Your link (%s) has already been registered in our database.</p>
+                           <p>Your link (%(link)s) has already been registered in our database.</p>
                            <p>Its short link is 
-                            <a href="http://localhost:8080/%s">http://localhost:8080/%s</a>
-                           </p>""" % (link, cur_ext, cur_ext))
+                            <a href="%(host)s/%(ext)s">%(host)s/%(ext)s</a>
+                           </p>""" % {"link": link, "host": self.server_address, "ext": cur_ext})
             return
 
         elif args[0] == "id-taken":
