@@ -10,7 +10,7 @@ class Server_DRD(BaseHTTPRequestHandler):
 
     error_message_format = """
     <head>
-        <title>Error %(code)d</title>
+        <title>Domain ReDirector - Error %(code)d</title>
     </head>
     <body>
         <h1>%(message)s</h1>
@@ -146,7 +146,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             new_id = self.internal_db.add_rand(link)
             new_ext = idtos(new_id)
 
-            self.send_page(201, "Domain ReDirector - Registration Complete",
+            self.send_page(201, "Registration Complete",
                            """<h1>Registration Complete!</h1></br>
                            <p>Thank you! Your link (%s) has been registered!</p>
                            <p>Your new short link is 
@@ -166,7 +166,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             new_id = self.internal_db.add_with_id(link, link_id)
             if new_id >= 0:
 
-                self.send_page(201, "Domain ReDirector - Registration Complete",
+                self.send_page(201, "Registration Complete",
                                """<h1>Registration Complete!</h1></br>
                                <p>Thank you! Your link (%s) has been registered with the ID: %s!</p>
                                <p>Your new short link is 
@@ -186,7 +186,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             cur_id = self.internal_db.get_id_by_link(link)
             cur_ext = idtos(cur_id)
 
-            self.send_page(201, "Domain ReDirector - Link Already Registered",
+            self.send_page(201, "Link Already Registered",
                            """<h1>Your Link was Already Registered.</h1></br>
                            <p>Your link (%s) has already been registered in our database.</p>
                            <p>Its short link is 
@@ -198,7 +198,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             form_dict = self.process_form()
             cur_ext = str(form_dict["ext"])
 
-            self.send_page(201, "Domain ReDirector - ID Taken",
+            self.send_page(201, "ID Taken",
                            """<h1>Your ID Was Already Taken.</h1></br>
                            <p>Your chosen ID (%s) was already registered in our database.</p>""" % cur_ext)
             return
