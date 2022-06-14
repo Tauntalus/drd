@@ -1,4 +1,4 @@
-from http.server import BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, _quote_html
 from src.stoid import stoid, idtos
 from src.database import LinkDB
 from urllib.parse import unquote
@@ -7,18 +7,26 @@ from urllib.parse import unquote
 class Server_DRD(BaseHTTPRequestHandler):
     internal_db = LinkDB()
 
+    error_message_format = """
+    <h1>%s</h1>
+    <p>%s</p>
+    <a href=http://localhost:8080/>Main Page</a>"""
+
     # send_page: accepts a response code, page title, and page body
     # then sends a well-formatted HTML response to the requester
-    def send_page(self, code, title, page):
+    def send_page(self, code, title, page, err = False):
         self.send_response(code)
-        self.send_header("Content-type", "text/html")
+        if err:
+            self.send_header("Content-type", "text/html")
+        else:
+            self.send_header("Content-type", self.error_content_type)
 
         self.end_headers()
 
         self.wfile.write(bytes("<html>", "utf-8"))
         self.wfile.write(bytes(
             """<head>
-                <title>%s</title>
+                <title>Domain ReDirector - %s</title>
             </head>""" % title, "utf-8"))
         self.wfile.write(bytes(
             """<body>
@@ -55,7 +63,7 @@ class Server_DRD(BaseHTTPRequestHandler):
         args = str(self.path)[1:].split('/')
 
         if args[0] == '':
-            self.send_page(200, "Domain ReDirector - Main Page",
+            self.send_page(200, "Main Page",
 
                            """<h1>DRD - Domain ReDirector</h1></br>
                            <p>This is the home page.</p>
@@ -63,7 +71,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             return
 
         elif args[0] == "register":
-            self.send_page(200, "Domain ReDirector - Register a Link",
+            self.send_page(200, "Register a Link",
 
                            """<h1>Register a New Link</h1></br>
                            <form method="POST" action="register-complete">
@@ -78,7 +86,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             return
 
         elif args[0] == "register-id":
-            self.send_page(200, "Domain ReDirector - Register A Link",
+            self.send_page(200, "Register A Link",
 
                            """<h1>Register a New Link With An ID</h1></br>
                            <form method="POST" action="register-id-complete">
@@ -98,7 +106,10 @@ class Server_DRD(BaseHTTPRequestHandler):
             return
 
         elif args[0] == "teapot":
-            self.send_error(418)
+            self.send_error(418,
+                            "???",
+                            "I'm a teapot!",
+                            "")
             return
 
         # Redirection handler
@@ -106,8 +117,16 @@ class Server_DRD(BaseHTTPRequestHandler):
             if args[0].isalpha() and len(args[0]) <= self.internal_db.char_limit:
                 link_id = stoid(args[0])
                 link = self.internal_db.get_link_by_id(link_id)
-                self.redirect(301, link)
-                return
+                if link:
+                    self.redirect(301, link)
+                    return
+
+            self.send_error(404,
+                            "Page Not Found",
+                            "Page Not Found",
+                            "It looks like the page you're looking for doesn't exist.")
+            return
+
 
     # do_POST: POST request handler
     # TODO: Move HTML pages to external resource
@@ -183,29 +202,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             return
 
     # send_error: Hard Error Handler
-    #
-    def send_error(self, code, message=None, explain=None):
-        if code == 404:
-            self.send_page(404, "Domain ReDirector - Page Not Found",
-                           """<h1>Page Not Found</h1>
-                           <p>This URL doesn't go anywhere, sadly.</p>
-                           <a href=http://localhost:8080/>Main Page</a>""")
-        elif code == 418:
-            self.send_page(404, "Domain ReDirector - ???",
-                           """<h1>I'm A Teapot!</h1>
-                           <a href=http://localhost:8080/>Main Page</a>""")
-            return
-        elif code == 500:
-            self.send_page(404, "Domain ReDirector - Server Error",
-                           """<h1>Server Error</h1>
-                           <p>Something has gone wrong on our end. Sorry about that.</p>
-                           <a href=http://localhost:8080/>Main Page</a>""")
-            return
-        elif code == 502:
-            self.send_page(404, "Domain ReDirector - Bad Gateway",
-                           """<h1>Bad Gateway!</h1>
-                           <p>Bad! Bad Gateway! Don't do that!</p>
-                           <a href=http://localhost:8080/>Main Page</a>""")
-            return
-        else:
-            BaseHTTPRequestHandler.send_error(code, message, explain)
+    def send_error(self, code, title, header, body):
+        content = self.error_message_format % (header, body)
+        self.send_page(code, title, content, True)
+        return
