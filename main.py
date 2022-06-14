@@ -7,8 +7,8 @@ def main():
     host = "localhost"
     port = 8080
 
-    ws = HTTPServer((host, port), Server_DRD(host, "Domain ReDirector", port))
-    print("Server started at http://%(host)s on port %(port)d." % {"host": host, "port": port})
+    ws = HTTPServer((host, port), Server_DRD)
+    print("Server started at http://%(host)s on port %(port)s." % {"host": host, "port": port})
 
     try:
         ws.serve_forever()
