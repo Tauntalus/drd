@@ -9,6 +9,7 @@ class Server_DRD(BaseHTTPRequestHandler):
     internal_db = LinkDB()
     name = "Domain ReDirector"
     server_address = "http://%(host)s:%(port)s"
+
     error_message_format = """
     <head>
         <title>{} - Error %(code)d</title>
@@ -18,6 +19,66 @@ class Server_DRD(BaseHTTPRequestHandler):
         <p>%(explain)s</p>
         <a href="/">Main Page</a>
     </body>""".format(name)
+
+    css_format = """
+    body {
+        background-color: #D6D6FF;
+        margin: 1%;
+    }
+    
+    div {
+        padding: 1%;
+    }
+    
+    form {
+        align: right;
+        margin: auto;
+        width: 30%;
+    }
+    
+    .page {
+        background-color: #E6E6FF;
+        margin: auto;
+        width: 90%;
+        text-align: center;
+    }
+    
+    .grid {
+        display: flex;
+        flex-direction: row;
+        width: 35%;
+        align-self: center;
+        justify-content: space-between;
+    }
+    
+    .no-style {
+        color: initial;
+        text-decoration: none;
+    }
+    
+    .button {
+        text-decoration: none;
+        color: initial;
+        
+        border: 0.25em solid #D0D0D0;
+        border-radius: 0.25em;
+        
+        padding: 0.1em 0.25em;
+        background-color: #E6E6E6;
+    }
+    
+    :hover {
+        cursor: pointer;
+    }
+    
+    :active {
+        background-color: #D6D6D6;
+        border: 0.3em solid #C6C6C6;
+    }
+    
+    :invalid {
+    }
+    """
 
     # TODO: Look into better way to resolve server address
     def get_server_address(self):
@@ -36,13 +97,16 @@ class Server_DRD(BaseHTTPRequestHandler):
         self.wfile.write(bytes("<html>", "utf-8"))
         self.wfile.write(bytes(
             """<head>
+                <style>%(css)s</style>
                 <title>%(name)s - %(title)s</title>
-            </head>""" % {"name": self.name, "title": title}, "utf-8"))
+            </head>"""
+            % {"css": self.css_format, "name": self.name, "title": title}, "utf-8"))
         self.wfile.write(bytes(  # TODO: Header link may need a revisit
             """<body>
                 <div class="page">
                     <a href="/" class="no-style"><h1>%(name)s</h1></a><hr>
-                    %(body)s""" % {"name": self.name, "body": page}, "utf-8"))
+                    %(body)s"""
+            % {"name": self.name, "body": page}, "utf-8"))
 
         if title != "Main Page":
             self.wfile.write(bytes(
@@ -257,7 +321,7 @@ class Server_DRD(BaseHTTPRequestHandler):
             link = str(unquote(form_dict["link"]))
 
             if self.internal_db.get_id_by_link(link):
-                self.redirect(308, "already-registered")
+                self.redirect(308, "link-already-registered")
                 return
 
             new_id = self.internal_db.add_rand(link)
