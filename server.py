@@ -6,36 +6,40 @@ from urllib.parse import unquote
 
 # Server_DRD: Custom WebServer for Domain ReDirector
 class Server_DRD(BaseHTTPRequestHandler):
-    internal_db = LinkDB()
+    def __init__(self, host, name, port):
+        self.internal_db = LinkDB()
+        self.host = host
+        self.name = name
+        self.port = port
 
-    error_message_format = """
-    <head>
-        <title>Domain ReDirector - Error %(code)d</title>
-    </head>
-    <body>
-        <h1>%(message)s</h1>
-        <p>%(explain)s</p>
-        <a href="/">Main Page</a>
-    </body>"""
+        self.server_address = "http://" + str(self.host) + str(self.port)
+        self.error_message_format = """
+        <head>
+            <title>{} - Error %(code)d</title>
+        </head>
+        <body>
+            <h1>%(message)s</h1>
+            <p>%(explain)s</p>
+            <a href="/">Main Page</a>
+        </body>""".format(name)
 
     # send_page: accepts a response code, page title, and page body
     # then sends a well-formatted HTML response to the requester
+    # TODO: Improve header information
     def send_page(self, code, title, page):
         self.send_response(code)
         self.send_header("Content-type", "text/html")
-
-
         self.end_headers()
 
         self.wfile.write(bytes("<html>", "utf-8"))
         self.wfile.write(bytes(
             """<head>
-                <title>Domain ReDirector - %s</title>
-            </head>""" % title, "utf-8"))
+                <title>%(name)s - %(title)s</title>
+            </head>""" % {"name": self.name, "title": title}, "utf-8"))
         self.wfile.write(bytes(
             """<body>
-                %s
-            </body>""" % page, "utf-8"))
+                %(body)s
+            </body>""" % {"body": page}, "utf-8"))
         self.wfile.write(bytes("</html>", "utf-8"))
         return
 
@@ -99,14 +103,52 @@ class Server_DRD(BaseHTTPRequestHandler):
                                 <input type="url" id="link" name="link" required>
                             </div>
                             <div>
-                                <label for="ext">%d-letter ID: </label>
+                                <label for="ext">%(lim)d-letter ID: </label>
                                 <input type="text" id="ext" name="ext" 
-                                minlength=%d maxlength=%d pattern="[A-Za-z]{%d}" required>
+                                minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
                             </div>
                             <div>
                                 <input type=submit value="Register">
                             </div>
-                           </form>""" % (self.internal_db.char_limit, self.internal_db.char_limit, self.internal_db.char_limit, self.internal_db.char_limit))
+                           </form>""" % {"lim": self.internal_db.char_limit})
+            return
+
+        elif args[0] == "remove":
+            self.send_page(200, "Remove A Link",
+
+                           """<h1>Remove An Existing Link</h1></br>
+                           <div>
+                            <p>Please understand that any short links for this link will\
+                            no longer work after removal.</p>
+                           </div>
+                           <form method="DELETE" action="remove-complete">
+                            <div>
+                                <label for="link">Link to remove: </label>
+                                <input type="url" id="link" name="link" required>
+                            </div>
+                            <div>
+                                <input type=submit value="Remove">
+                            </div>
+                           </form>""")
+            return
+
+        elif args[0] == "remove-id":
+            self.send_page(200, "Remove An ID",
+
+                           """<h1>Remove An Existing ID</h1></br>
+                           <div>
+                            <p>Please understand that the shortlink %(link)s will\
+                            no longer work after removal.</p>
+                           </div>
+                           <form method="DELETE" action="remove-id-complete">
+                            <div>
+                                <label for="link">Link to remove: </label>
+                                <input type="url" id="link" name="link" required>
+                            </div>
+                            <div>
+                                <input type=submit value="Remove">
+                            </div>
+                           </form>""" % {"link": self.server_address + "/<ID>"})
             return
 
         elif args[0] == "teapot":
@@ -178,6 +220,10 @@ class Server_DRD(BaseHTTPRequestHandler):
                 self.redirect(308, "id-taken")
                 return
 
+        elif args[0] == "remove-complete":
+            return
+        elif args[0] == "remove-id-complete":
+            return
         # Soft Error Pages
         # These pages handle "soft errors" - not severe enough to crash the server,
         # but notable enough to deserve a response to the client

@@ -4,11 +4,11 @@ from http.server import HTTPServer
 
 # Main Method - kick up server, watch for interrupt
 def main():
-    name = "localhost"
+    host = "localhost"
     port = 8080
 
-    ws = HTTPServer((name, port), Server_DRD)
-    print("Server started at http://%s on port %s." % (name, port))
+    ws = HTTPServer((host, port), Server_DRD(host, "Domain ReDirector", port))
+    print("Server started at http://%(host)s on port %(port)d." % {"host": host, "port": port})
 
     try:
         ws.serve_forever()
