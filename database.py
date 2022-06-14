@@ -3,7 +3,7 @@ import random
 
 
 class LinkDB:
-    char_limit = 5
+    char_limit = 3
     base = len(src.stoid.CHAR_MAP)
     db = {}
 
@@ -24,34 +24,42 @@ class LinkDB:
 
             # Failure can be dealt with by the managing function
             if fails >= self.max_fail:
-                print("Failed to add link %s to database: Too many collisions!" % link)
+                print("DB: Failed to add link %s to database: Too many collisions!" % link)
                 return -1
             else:
                 self.db[link_id] = link
-                print("Added link %s with ID #%d to database." % (link, link_id))
+                print("DB: Added link %s with ID #%d to database." % (link, link_id))
                 return link_id
 
     # add_with_id: Add a new link with a specific ID
     # Returns ID of link if successful, -1 if fail
     def add_with_id(self, link, link_id):
+        if link_id >= pow(self.base, self.char_limit) or link_id < 0:
+            print("DB: Failed to add link %s with ID #%d to database: ID out of range!" % (link, link_id))
+            return -2
+
         if self.db.get(link_id):
-            print("Failed to add link %s with ID #%d to database: ID already taken!" % (link, link_id))
+            print("DB: Failed to add link %s with ID #%d to database: ID already taken!" % (link, link_id))
             return -1
+
         else:
             self.db[link_id] = link
-            print("Added link %s with ID #%d to database." % (link, link_id))
+            print("DB: Added link %s with ID #%d to database." % (link, link_id))
             return link_id
 
     # remove_by_id: Removes an item with a specific ID
     # Returns ID of link if successful, -1 if fail
     def remove_by_id(self, link_id):
+        if link_id >= pow(self.base, self.char_limit) or link_id < 0:
+            print("DB: Failed to remove link with ID #%d from database: ID out of range!" % link_id)
+            return -2
         if self.db.get(link_id):
             link = self.db[link_id]
             del self.db[link_id]
-            print("Removed link %s with ID #%d from database." % (link, link_id))
+            print("DB: Removed link %s with ID #%d from database." % (link, link_id))
             return link_id
         else:
-            print("Failed to remove link with ID #%d from database: ID not found!" % link_id)
+            print("DB: Failed to remove link with ID #%d from database: ID not found!" % link_id)
             return -1
 
     # remove_by_link: Removes a specific link from the DB
@@ -61,25 +69,29 @@ class LinkDB:
             val = [key for key, value in self.db.items() if value == link]
             link_id = val[0]
             del self.db[link_id]
-            print("Removed link %s with ID #%d from database." % (link, link_id))
+            print("DB: Removed link %s with ID #%d from database." % (link, link_id))
             return link_id
         else:
-            print("Failed to remove link %s from database: Link not found!" % link)
+            print("DB: Failed to remove link %s from database: Link not found!" % link)
             return -1
 
     # update_by_id: updates an ID with a new link.
     # Returns ID of link if successful, -1 if fail
     def update_by_id(self, link_id, new_link):
+        if link_id >= pow(self.base, self.char_limit) or link_id < 0:
+            print("DB: Failed to update ID #%d to new link %s: ID out of range!" % (link_id, new_link))
+            return -2
+
         if self.db.get(link_id) and new_link not in self.db.values():
             self.db[link_id] = new_link
-            print("Updated ID #%d to new link %s." % (link_id, new_link))
+            print("DB: Updated ID #%d to new link %s." % (link_id, new_link))
             return link_id
         elif new_link in self.db.values():
             val = [key for key, value in self.db.items() if value == new_link]
-            print("Failed to update ID #%d to new link %s: Link already in database!" % (link_id, new_link))
+            print("DB: Failed to update ID #%d to new link %s: Link already in database!" % (link_id, new_link))
             return val[0]
         else:
-            print("Failed to update ID #%d to new link %s: ID not found!" % (link_id, new_link))
+            print("DB: Failed to update ID #%d to new link %s: ID not found!" % (link_id, new_link))
             return -1
 
     # get_link_by_id: Returns the DB entry for a given ID
