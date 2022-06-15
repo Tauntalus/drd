@@ -1,10 +1,10 @@
-import src.stoid
+import stoid
 import random
 
 
 class LinkDB:
     char_limit = 3
-    base = len(src.stoid.CHAR_MAP)
+    base = len(stoid.CHAR_MAP)
     db = {}
 
     max_fail = 5

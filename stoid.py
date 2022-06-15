@@ -39,7 +39,7 @@ def stoid(s):
     i = 0
     while i < str_len:
         char = s[i]
-        place_val = CHAR_MAP.index[char]
+        place_val = CHAR_MAP.index(char)
 
         # Take the exact place value, then multiply it by it's positional value.
         # The positional value ranges from str_len - 1 to 0
@@ -60,7 +60,7 @@ def idtos(num):
     while num_temp >= base:
         s = CHAR_MAP[num_temp % base] + s
         num_temp -= num_temp % base
-        num_temp = num_temp / base
+        num_temp = int(num_temp / base)
 
     # Final character is guaranteed to be between 0-25,
     # So we can just add it to the string

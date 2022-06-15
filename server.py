@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler
-from src.stoid import stoid, idtos
-from src.database import LinkDB
+from stoid import stoid, idtos
+from database import LinkDB
 from urllib.parse import unquote
 
 

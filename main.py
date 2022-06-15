@@ -1,11 +1,11 @@
-from src.server import Server_DRD
+from server import Server_DRD
 from http.server import HTTPServer
 
 
 # Main Method - kick up server, watch for interrupt
 def main():
     host = "localhost"
-    port = 8080
+    port = 80
 
     ws = HTTPServer((host, port), Server_DRD)
     print("Server started at http://%(host)s on port %(port)s." % {"host": host, "port": port})
