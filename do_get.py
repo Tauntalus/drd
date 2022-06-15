@@ -2,6 +2,7 @@
 
 # handle_get: Accepts args[] representing a split URL and returns
 # a HTTP response <code>, a page <title>, and a page <body>
+# TODO: Move HTML pages to external resource
 def handle_get(args):
     # Default to 404
     code = 404

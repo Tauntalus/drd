@@ -172,7 +172,6 @@ class Handler(BaseHTTPRequestHandler):
             return
 
     # do_GET: GET request handler
-    # TODO: Move HTML pages to external resource
     def do_GET(self):
         # This line gets the path as a list of arguments,
         # Stripping off the leading slash
@@ -190,7 +189,7 @@ class Handler(BaseHTTPRequestHandler):
         return
 
     # do_POST: POST request handler
-    # TODO: Move HTML pages to external resource
+
     def do_POST(self):
         args = self.path[1:].split('/')
         form_data = self.process_form()
