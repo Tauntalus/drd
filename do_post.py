@@ -31,7 +31,7 @@ def validate_form_data(form_data, ext_limit):
 
     return link_flag, ext_flag
 
-
+# TODO: Move HTML pages to external resource
 def handle_post(args, form_data, db_info, id_limit):
     code = 404
     title = "Page Not Found"
