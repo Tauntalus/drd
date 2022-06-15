@@ -5,7 +5,7 @@ from http.server import HTTPServer
 # Main Method - kick up server, watch for interrupt
 def main():
     host = "localhost"
-    port = 80
+    port = 8080
 
     ws = HTTPServer((host, port), Server_DRD)
     print("Server started at http://%(host)s on port %(port)s." % {"host": host, "port": port})
