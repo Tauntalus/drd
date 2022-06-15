@@ -82,8 +82,9 @@ class Server_DRD(BaseHTTPRequestHandler):
 
     # TODO: Look into better way to resolve server address
     def get_server_address(self):
-        host = self.server.server_name
-        return self.server_address % {"host": host}
+        return "http://drd.buzz"
+        # host = self.server.server_name
+        # return self.server_address % {"host": host}
 
     # send_page: accepts a response code, page title, and page body
     # then sends a well-formatted HTML response to the requester
