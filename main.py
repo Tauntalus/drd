@@ -1,4 +1,4 @@
-from server import Server_DRD
+from handler import Handler
 from http.server import HTTPServer
 
 
@@ -7,7 +7,7 @@ def main():
     host = "localhost"
     port = 80
 
-    ws = HTTPServer((host, port), Server_DRD)
+    ws = HTTPServer((host, port), Handler)
     print("Server started at http://%(host)s on port %(port)s." % {"host": host, "port": port})
 
     try:

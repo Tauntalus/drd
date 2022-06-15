@@ -1,5 +1,5 @@
-import stoid
 import random
+import stoid
 import sqlite3
 from sqlite3 import Error
 
@@ -17,6 +17,7 @@ def try_create_db(target):
             return conn
         else:
             return None
+
 
 class LinkDB:
     char_limit = 3
