@@ -134,7 +134,7 @@ def handle_post(args, form_data, context):
                                 <br>
                                 <p>Thank you! Your link <b>(%(link)s)</b> has been registered!</p>
                                 <p>Your new short link is 
-                                    <a href="%(host)s/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
+                                    <a href="/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
                                 </p>"""
                                 inserts["link"] = link
                                 inserts["ext"] = link_ext
@@ -162,7 +162,7 @@ def handle_post(args, form_data, context):
                                 <br>
                                 <p>Thank you! Your link <b>(%(link)s)</b> has been registered with the ID: %(ext)s!</p>
                                 <p>Your new short link is 
-                                    <a href="%(host)s/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
+                                    <a href="/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
                                 </p>"""
                                 inserts["link"] = link
                                 inserts["ext"] = link_ext
@@ -229,7 +229,7 @@ def handle_post(args, form_data, context):
                                     <h2>Update Complete!</h2>
                                     <br>
                                     <p>The link <b>(%(link)s)</b> has been moved to the address 
-                                        <a href="%(host)s/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
+                                        <a href="/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
                                     </p>"""
                                     inserts["link"] = link
                                     inserts["ext"] = link_ext
@@ -255,12 +255,11 @@ def handle_post(args, form_data, context):
                                     body = """
                                     <h2>Update Complete!</h2>
                                     <br>
-                                    <p>The link <b>(%(link)s)</b> has been moved to the ID: <b>%(ext)s</b>.</p>
-                                    <p>Its new Shortlink is: 
-                                        <a href="%(host)s/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
-                                    </p>"""
+                                    <p>The Shortlink 
+                                        <a href="/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
+                                    has been moved to the address: <b>%(link)s</b>.</p>
                                     inserts["link"] = link
-                                    inserts["ext"] = link_ext
+                                    inserts["ext"] = link_ext"""
 
                     # Soft Error Pages
                     # These pages handle "soft errors" - not severe enough to crash the server,
@@ -282,8 +281,7 @@ def handle_post(args, form_data, context):
                             <p>Its short link is 
                                 <a href="%(host)s/%(ext)s"><b>%(host)s/%(ext)s</b></a>
                             </p>
-                            <button onclick="history.back()">Go Back</button>
-                            """
+                            <button onclick="history.back()">Go Back</button>"""
                             inserts["link"] = link
                             inserts["ext"] = link_ext
 
@@ -295,8 +293,7 @@ def handle_post(args, form_data, context):
                             <h2>Your Link Was Not Found.</h2>
                             <br>
                             <p>The link you are trying to modify <b>(%(link)s)</b> does not appear to be in our database.</p>
-                            <button onclick="history.back()">Go Back</button>
-                            """
+                            <button onclick="history.back()">Go Back</button> """
                             inserts["link"] = link
 
                     elif args[0] == "link-invalid":
@@ -307,8 +304,7 @@ def handle_post(args, form_data, context):
                             <h2>Your Link Was Invalid.</h2>
                             <br>
                             <p>Your link <b>(%(link)s)</b> was invalid.</p>
-                            <button onclick="history.back()">Go Back</button>
-                            """
+                            <button onclick="history.back()">Go Back</button>"""
                             inserts["link"] = link
 
                     elif args[0] == "id-registered":
@@ -318,8 +314,7 @@ def handle_post(args, form_data, context):
                             body = """<h2>Your ID Was Already Registered.</h2><br>
                             <p>Your chosen ID <b>(%(ext)s)</b> was already registered
                              in our database. Sorry about that.</p>
-                            <button onclick="history.back()">Go Back</button>
-                            """
+                            <button onclick="history.back()">Go Back</button>"""
                             inserts["ext"] = link_ext
 
                     elif args[0] == "id-not-found":
@@ -331,8 +326,7 @@ def handle_post(args, form_data, context):
                             <br>
                             <p>The ID you are trying to modify <b>(%(ext)s)</b>
                             doesn't seem to exist in our database.</p>
-                            <button onclick="history.back()">Go Back</button>
-                            """
+                            <button onclick="history.back()">Go Back</button>"""
                             inserts["ext"] = link_ext
 
                     elif args[0] == "id-invalid":
@@ -345,8 +339,7 @@ def handle_post(args, form_data, context):
                             <p>Your chosen ID <b>(%(ext)s)</b> was invalid. It could be that
                             the ID was too long or short, or contained characters
                             other than letters.</p>
-                            <button onclick="history.back()">Go Back</button>
-                            """
+                            <button onclick="history.back()">Go Back</button>"""
                             inserts["ext"] = link_ext
 
                     # Sanity check - if return is None, DB Query broke and we need to stop
