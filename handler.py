@@ -8,7 +8,7 @@ class Handler(BaseHTTPRequestHandler):
     # TODO: BIG TODO!
     # TODO: Make constants pull from a config file!
     name = "Domain ReDirector"
-    server_address = "http://drd.buzz"
+    server_address = "localhost"
 
     charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     id_limit = 3
@@ -200,7 +200,8 @@ class Handler(BaseHTTPRequestHandler):
         if fail_flag:
             self.id_limit += 1
 
-        # TODO: Potential extra inserts
+        inserts["host"] = self.server_address
+        inserts["lim"] = self.id_limit
         page = body % inserts
 
         self.interpret_http_code(code, title, page)
