@@ -81,6 +81,7 @@ def handle_post(args, form_data, context):
                     ret = None
                     link = None
                     link_id = None
+                    link_ext = None
 
                     if not link_flag:
                         link = str(unquote(form_data["link"]))
@@ -257,9 +258,9 @@ def handle_post(args, form_data, context):
                                     <br>
                                     <p>The Shortlink 
                                         <a href="/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
-                                    has been moved to the address: <b>%(link)s</b>.</p>
+                                    has been moved to the address: <b>%(link)s</b>.</p>"""
                                     inserts["link"] = link
-                                    inserts["ext"] = link_ext"""
+                                    inserts["ext"] = link_ext
 
                     # Soft Error Pages
                     # These pages handle "soft errors" - not severe enough to crash the server,
