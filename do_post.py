@@ -60,11 +60,6 @@ def handle_post(args, form_data, context):
 
     inserts = {"name": name, "host": host, "lim": id_limit}
 
-    # Default to 404
-    code = 404
-    title = "Page Not Found"
-    body = "It looks like the page you're looking for doesn't exist."
-
     # Validation of form data
     link_flag, ext_flag = validate_form_data(form_data, charset, id_limit)
     if link_flag < 0:
@@ -83,7 +78,7 @@ def handle_post(args, form_data, context):
             if conn:
                 conn = database.try_create_table(conn, db_table, db_schema, True)
                 if conn:
-                    ret = None
+                    ret = []
                     link = None
                     link_id = None
                     link_ext = None
@@ -345,6 +340,11 @@ def handle_post(args, form_data, context):
                             the ID was too long or short, or contained characters
                             other than letters.</p>
                             <button onclick="history.back()">Go Back</button>"""
+                    # Bad path! 404 time
+                    else:
+                        code = 404
+                        title = "Page Not Found"
+                        body = "It looks like the page you're looking for doesn't exist."
 
                     # Sanity check - if return is None, DB Query broke and we need to stop
                     if ret is None:
