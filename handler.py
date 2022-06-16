@@ -2,8 +2,6 @@ from http.server import BaseHTTPRequestHandler
 from do_get import handle_get
 from do_post import handle_post
 
-from database import DBInfo
-
 
 # Handler: Custom HTTP Request Handler
 class Handler(BaseHTTPRequestHandler):
@@ -12,7 +10,7 @@ class Handler(BaseHTTPRequestHandler):
     name = "Domain ReDirector"
     server_address = "http://drd.buzz"
 
-    db_info = DBInfo("db/links.db", "links", ("id", "link",))
+    charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     id_limit = 3
 
     error_message_format = """
@@ -194,7 +192,7 @@ class Handler(BaseHTTPRequestHandler):
         args = self.path[1:].split('/')
         form_data = self.process_form()
 
-        code, title, body, inserts = handle_post(args, form_data, self.db_info, self.id_limit)
+        code, title, body, inserts = handle_post(args, form_data, self.charset, self.id_limit)
 
         # TODO: Potential extra inserts
         page = body % inserts
