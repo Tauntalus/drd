@@ -19,6 +19,7 @@ def validate_form_data(form_data, charset, ext_limit):
         link = str(unquote(link))
         try:
             val = urlparse(link)
+            test = all([val.scheme, val.netloc])
         except ValueError as e:
             print("Validator: Link is not a valid URL.")
             print("Validator: %(link)s" % {"link": link})
