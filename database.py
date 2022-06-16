@@ -10,6 +10,7 @@ def process_condition(cond):
 # try_create_db: Creates a DB file if none exists at <target>
 # If successful, returns the connection. Otherwise, returns None.
 def try_connect_db(target):
+    conn = None
     try:
         conn = sqlite3.connect(target)
         print("DB: Connected to database file \"%(file)s\"." % {"file": target})
