@@ -51,13 +51,15 @@ def try_create_table(conn, table, schema, biject=False):
 # try_execute: given a connection, SQL query, and insertion list,
 # attempts to execute the SQL query as written.
 # Returns connection, and query result.
-def try_execute(conn, sql, inserts=None):
+def try_execute(conn, sql, values=None):
     ret = None
     if conn:
         cursor = conn.cursor()
         try:
-            if inserts:
-                cursor.execute(sql, inserts)
+            if values:
+                if not isinstance(values, tuple):
+                    values = (values,)
+                cursor.execute(sql, values)
             else:
                 cursor.execute(sql)
 
@@ -165,6 +167,7 @@ def try_update(conn, table, values, conds):
 def close(conn):
     conn.commit()
     conn.close()
+    print("DB: Changes committed.")
     return conn
 
 

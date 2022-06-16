@@ -97,8 +97,7 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                                 body = "link-registered"
                             else:
                                 conn, ret = database.try_execute(conn,
-                                                                 "SELECT id FROM links",
-                                                                 link)
+                                                                 "SELECT id FROM links")
 
                                 # Generate new, unique ID within bounds
                                 link_id = randrange(pow(len(charset), id_limit))
@@ -113,10 +112,10 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                                     fail_flag = True
                                     print("POST Handler: Too many fails during DB insertion!")
                                     print("POST Handler: Increased ID length to %(lim)d." % {"lim": id_limit})
-
-                                conn = database.try_insert(conn, "links", (link_id, link))
+                                conn, ret = database.try_insert(conn, "links", (link_id, link))
 
                                 # Finally, build the HTML response
+                                link_ext = idtos(link_id, charset, id_limit)
                                 code = 201
                                 title = "Registration Complete"
                                 body = """
@@ -254,7 +253,7 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                                                              "SELECT * FROM links WHERE link=?",
                                                              link)
                             link_id = ret[0][0]
-                            link_ext = idtos(link_id)
+                            link_ext = idtos(link_id, charset, id_limit)
 
                             code = 201
                             title = "Link Already Registered",
@@ -328,7 +327,7 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                             inserts["ext"] = link_ext
 
                     # Sanity check - if return is None, DB Query broke and we need to stop
-                    if not ret:
+                    if ret is None:
                         code = 500
                         title = "Internal Error - Invalid Database Response"
                         body = """The database we use is responding erratically. We've logged what happened and
