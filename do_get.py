@@ -12,8 +12,7 @@ def handle_get(args, context):
     db_table = context["db_table"]
     db_schema = context["db_schema"]
 
-    charset = context["charset" \
-                      ""]
+    charset = context["charset"]
     inserts = {"name": name, "host": host, "lim": id_limit}
 
     # Default to 404
