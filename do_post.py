@@ -68,12 +68,14 @@ def handle_post(args, form_data, context):
     # Validation of form data
     link_flag, ext_flag = validate_form_data(form_data, charset, id_limit)
     if link_flag < 0:
-        code = 308
-        body = "link-invalid"
+        code = 400
+        title = "Invalid Link"
+        body = "The link you sent us was not a valid URL."
 
     elif ext_flag < 0:
-        code = 308
-        body = "id-invalid"
+        code = 400
+        title = "Invalid ID"
+        body = "The ID you sent us was not a valid %(lim)d-character ID." % {"lim": id_limit}
 
     else:
         if len(args) > 0:
@@ -307,7 +309,7 @@ def handle_post(args, form_data, context):
                             body = """
                             <h2>Your Link Was Invalid.</h2>
                             <br>
-                            <p>Your link <b>(%(link)s)</b> was invalid.</p>
+                            <p>Your link was invalid.</p>
                             <button onclick="history.back()">Go Back</button>"""
                             inserts["link"] = link
 
@@ -331,7 +333,6 @@ def handle_post(args, form_data, context):
                             <p>The ID you are trying to modify <b>(%(ext)s)</b>
                             doesn't seem to exist in our database.</p>
                             <button onclick="history.back()">Go Back</button>"""
-                            inserts["ext"] = link_ext
 
                     elif args[0] == "id-invalid":
                         if not ext_flag:
@@ -340,11 +341,10 @@ def handle_post(args, form_data, context):
                             body = """
                             <h2>Your ID Was Invalid.</h2>
                             <br>
-                            <p>Your chosen ID <b>(%(ext)s)</b> was invalid. It could be that
+                            <p>Your chosen ID was invalid. It could be that
                             the ID was too long or short, or contained characters
                             other than letters.</p>
                             <button onclick="history.back()">Go Back</button>"""
-                            inserts["ext"] = link_ext
 
                     # Sanity check - if return is None, DB Query broke and we need to stop
                     if ret is None:
