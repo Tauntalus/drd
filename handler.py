@@ -116,19 +116,24 @@ class Handler(BaseHTTPRequestHandler):
     # then sends a well-formatted HTML response to the requester
     # TODO: Improve header information
     def send_page(self, code, title, body):
+        page = self.default_format % {"css": self.css_format,
+                                      "title": title,
+                                      "name": self.context["name"],
+                                      "body": body}
+
         self.send_response(code)
         self.send_header("Content-type", "text/html")
+        self.send_header('Connection', 'close')
+        self.send_header('Content-Length', int(len(page)))
         self.end_headers()
-        self.wfile.write(bytes(self.default_format % {"css": self.css_format,
-                                                      "title": title,
-                                                      "name": self.context["name"],
-                                                      "body": body}, "utf-8"))
+        if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
+            self.wfile.write(page)
         return
 
     # redirect - Redirects the user to a given location
     def redirect(self, code, link):
         self.send_response(code)
-        self.send_header("location", link)
+        self.send_header("location", str(link))
         self.end_headers()
         return
 
@@ -171,6 +176,11 @@ class Handler(BaseHTTPRequestHandler):
                             """Something has gone very, very wrong on our end. 
                             We're working on sorting it out, try checking back later.""")
             return
+
+    # do_HEAD: HEAD request handler
+    def do_HEAD(self):
+        self.do_GET()
+        return
 
     # do_GET: GET request handler
     def do_GET(self):
