@@ -14,6 +14,10 @@ def validate_form_data(form_data, charset, ext_limit):
     link_flag = 0
     ext_flag = 0
 
+    # regexes for validating URLs
+    scheme_regex = r'[A-Za-z0-9\-\_\.]+'    # TODO: Make more discerning
+    netloc_regex = r'[A-Za-z0-9\-\.]+'      # TODO: Make more discerning
+    path_regex = r'[A-Za-z0-9\-\_\/]*'      # TODO: Make more discerning
     # URL validation
     if link:
         link = str(unquote(link))
@@ -22,6 +26,15 @@ def validate_form_data(form_data, charset, ext_limit):
             test = all([val.scheme, val.netloc])
             if not test:
                 raise ValueError
+            else:
+                t_scheme = search(scheme_regex, val.scheme)
+                t_netloc = search(netloc_regex, val.netloc)
+                t_path = True
+                if val.path:
+                    t_path = search(path_regex, val.path)
+
+                if not t_scheme or not t_netloc or not t_path:
+                    raise ValueError
         except ValueError as e:
             print("Validator: Link is not a valid URL.")
             print("Validator: %(link)s" % {"link": link})
