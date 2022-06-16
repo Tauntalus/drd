@@ -41,15 +41,26 @@ def validate_form_data(form_data, charset, ext_limit):
 
 
 # TODO: Move HTML pages to external resource
-def handle_post(args, form_data, charset, id_limit, max_fails):
-    # TODO: Improve information control on DB schemas
+def handle_post(args, form_data, context):
+    name = context["name"]
+    host = context["host"]
+
+    charset = context["charset"]
+    id_limit = context["id_limit"]
+    fail_limit = context["fail_limit"]
+
+    db_file = context["db_file"]
+    db_table = context["db_table"]
+    db_schema = context["db_schema"]
+
     fail_flag = False
+
+    inserts = {"name": name, "host": host, "lim": id_limit}
 
     # Default to 404
     code = 404
     title = "Page Not Found"
     body = "It looks like the page you're looking for doesn't exist."
-    inserts = {}
 
     # Validation of form data
     link_flag, ext_flag = validate_form_data(form_data, charset, id_limit)
@@ -63,9 +74,9 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
 
     else:
         if len(args) > 0:
-            conn = database.try_connect_db("db/drd.db")
+            conn = database.try_connect_db(db_file)
             if conn:
-                conn = database.try_create_table(conn, "links", ("id", "link"), True)
+                conn = database.try_create_table(conn, db_table, db_schema, True)
                 if conn:
                     ret = None
                     link = None
@@ -107,19 +118,20 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                                     fails += 1
 
                                 # Too many fails = upgrade DB storage
-                                if fails >= max_fails:
+                                if fails >= fail_limit:
                                     id_limit += 1
                                     fail_flag = True
                                     print("POST Handler: Too many fails during DB insertion!")
                                     print("POST Handler: Increased ID length to %(lim)d." % {"lim": id_limit})
-                                conn, ret = database.try_insert(conn, "links", (link_id, link))
+                                conn, ret = database.try_insert(conn, db_table, (link_id, link))
 
                                 # Finally, build the HTML response
                                 link_ext = idtos(link_id, charset, id_limit)
                                 code = 201
                                 title = "Registration Complete"
                                 body = """
-                                <h2>Registration Complete!</h2><br>
+                                <h2>Registration Complete!</h2>
+                                <br>
                                 <p>Thank you! Your link <b>(%(link)s)</b> has been registered!</p>
                                 <p>Your new short link is 
                                     <a href="%(host)s/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
@@ -142,11 +154,12 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                                 else:
                                     body = "id-registered"
                             else:
-                                conn, ret = database.try_insert(conn, "links", (link_id, link))
+                                conn, ret = database.try_insert(conn, db_table, (link_id, link))
                                 code = 201
                                 title = "Registration Complete"
                                 body = """
-                                <h2>Registration Complete!</h2><br>
+                                <h2>Registration Complete!</h2>
+                                <br>
                                 <p>Thank you! Your link <b>(%(link)s)</b> has been registered with the ID: %(ext)s!</p>
                                 <p>Your new short link is 
                                     <a href="%(host)s/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
@@ -164,12 +177,13 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                                 body = "link-not-found"
                             else:
                                 conn, ret = database.try_execute(conn,
-                                                            "DELETE FROM links WHERE link=?",
-                                                            link)
+                                                                 "DELETE FROM links WHERE link=?",
+                                                                 link)
                                 code = 201
                                 title= "Removal Complete",
                                 body = """
-                                <h2>Removal Complete!</h2><br>
+                                <h2>Removal Complete!</h2>
+                                <br>
                                 <p>The link <b>(%(link)s)</b> has been removed from our database.</p>"""
                                 inserts["link"] = link
 
@@ -183,12 +197,13 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                                 body = "id-not-found"
                             else:
                                 conn, ret = database.try_execute(conn,
-                                                            "DELETE FROM links WHERE id=?",
-                                                            link_id)
+                                                                 "DELETE FROM links WHERE id=?",
+                                                                 link_id)
                                 code = 201
                                 title = "Removal Complete",
                                 body = """
-                                <h2>Removal Complete!</h2><br>
+                                <h2>Removal Complete!</h2>
+                                <br>
                                 <p>The ID <b>(%(ext)s)</b> has been unregistered from our database.</p>"""
                                 inserts["ext"] = link_ext
 
@@ -211,7 +226,8 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                                     code = 201
                                     title = "Update Complete"
                                     body = """
-                                    <h2>Update Complete!</h2><br>
+                                    <h2>Update Complete!</h2>
+                                    <br>
                                     <p>The link <b>(%(link)s)</b> has been moved to the address 
                                         <a href="%(host)s/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
                                     </p>"""
@@ -237,6 +253,8 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                                     code = 201
                                     title = "Update Complete"
                                     body = """
+                                    <h2>Update Complete!</h2>
+                                    <br>
                                     <p>The link <b>(%(link)s)</b> has been moved to the ID: <b>%(ext)s</b>.</p>
                                     <p>Its new Shortlink is: 
                                         <a href="%(host)s/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
@@ -256,9 +274,10 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                             link_ext = idtos(link_id, charset, id_limit)
 
                             code = 201
-                            title = "Link Already Registered",
+                            title = "Link Already Registered"
                             body = """
-                            <h2>Your Link Was Already Registered.</h2><br>
+                            <h2>Your Link Was Already Registered.</h2>
+                            <br>
                             <p>Your link <b>(%(link)s)</b> has already been registered in our database.</p>
                             <p>Its short link is 
                                 <a href="%(host)s/%(ext)s"><b>%(host)s/%(ext)s</b></a>
@@ -273,7 +292,8 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                             code = 201
                             title = "Link Not Found"
                             body ="""
-                            <h2>Your Link Was Not Found.</h2><br>
+                            <h2>Your Link Was Not Found.</h2>
+                            <br>
                             <p>The link you are trying to modify <b>(%(link)s)</b> does not appear to be in our database.</p>
                             <button onclick="history.back()">Go Back</button>
                             """
@@ -284,7 +304,8 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                             code = 201
                             title = "Link Invalid"
                             body = """
-                            <h2>Your Link Was Invalid.</h2><br>
+                            <h2>Your Link Was Invalid.</h2>
+                            <br>
                             <p>Your link <b>(%(link)s)</b> was invalid.</p>
                             <button onclick="history.back()">Go Back</button>
                             """
@@ -306,7 +327,8 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                             code = 201
                             title = "ID Not Found"
                             body = """
-                            <h2>Your ID Was Not Found.</h2><br>
+                            <h2>Your ID Was Not Found.</h2>
+                            <br>
                             <p>The ID you are trying to modify <b>(%(ext)s)</b>
                             doesn't seem to exist in our database.</p>
                             <button onclick="history.back()">Go Back</button>
@@ -318,7 +340,8 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                             code = 201
                             title = "ID Invalid"
                             body = """
-                            <h2>Your ID Was Invalid.</h2><br>
+                            <h2>Your ID Was Invalid.</h2>
+                            <br>
                             <p>Your chosen ID <b>(%(ext)s)</b> was invalid. It could be that
                             the ID was too long or short, or contained characters
                             other than letters.</p>
@@ -343,4 +366,5 @@ def handle_post(args, form_data, charset, id_limit, max_fails):
                 title = "Internal Error - Database Failed To Initialize"
                 body = "The connection to our database failed to initialize. We can't do anything without that!"
 
-    return code, title, body, inserts, fail_flag
+    page = body % inserts
+    return code, title, page, fail_flag

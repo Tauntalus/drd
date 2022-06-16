@@ -3,19 +3,25 @@
 # handle_get: Accepts args[] representing a split URL and returns
 # a HTTP response <code>, a page <title>, and a page <body>
 # TODO: Move HTML pages to external resource
-def handle_get(args):
+def handle_get(args, context):
+    name = context["name"]
+    host = context["host"]
+    id_limit = context["id_limit"]
+
+    inserts = {"name": name, "host": host, "lim": id_limit}
+
     # Default to 404
     code = 404
     title = "Page Not Found"
     body = "It looks like the page you're looking for doesn't exist."
-    inserts = {}
 
     if len(args) > 0:
         if args[0] == '':
             code = 200
             title = "Main Page"
             body = """
-            <h2>Welcome to the Domain ReDirector!</h2><br>
+            <h2>Welcome to the Domain ReDirector!</h2>
+            <br>
             <div>
                 <div>
                     <a href="/register" class="button">Create a New Shortlink</a>
@@ -32,7 +38,8 @@ def handle_get(args):
             title = "Register a Link"
 
             body = """
-            <h2>Register a New Link</h2><br>
+            <h2>Register a New Link</h2>
+            <br>
             <form method="POST" action="register">
                 <div>
                     <label for="link">Link to register: </label>
@@ -48,7 +55,8 @@ def handle_get(args):
             title = "Register A Link"
 
             body = """
-            <h2>Register a New Link With An ID</h2><br>
+            <h2>Register a New Link With An ID</h2>
+            <br>
             <form method="POST" action="register-id">
                 <div>
                     <label for="link">Link to register: </label>
@@ -69,7 +77,8 @@ def handle_get(args):
             title = "Remove A Link"
 
             body = """
-            <h2>Remove An Existing Link</h2><br>
+            <h2>Remove An Existing Link</h2>
+            <br>
             <div>
                 <p>Please understand that any short links for this link will
                 no longer work after removal.</p>
@@ -89,9 +98,10 @@ def handle_get(args):
             title = "Remove A Shortlink"
 
             body = """
-            <h2>Remove An Existing Shortlink</h2><br>
+            <h2>Remove An Existing Shortlink</h2>
+            <br>
             <div>
-                <p>Please understand that the Shortlink <b>%(addr)s</b> will
+                <p>Please understand that the Shortlink <b>%(host)s/&lt;ID&gt;</b> will
                 no longer work after removal.</p>
             </div>
             <form method="POST" action="remove-id">
@@ -110,7 +120,8 @@ def handle_get(args):
             title = "Update A Link"
 
             body = """
-            <h2>Update An Existing Link</h2><br>
+            <h2>Update An Existing Link</h2>
+            <br>
             <div>
                 <p>Please understand that any existing Shortlinks for this link
                 will no longer work after update.</p>
@@ -135,9 +146,10 @@ def handle_get(args):
             title = "Update A Shortlink"
 
             body = """
-            <h2>Update An Existing Shortlink</h2><br>
+            <h2>Update An Existing Shortlink</h2>
+            <br>
             <div>
-                <p>Please understand that the Shortlink <b>%(addr)s</b> will
+                <p>Please understand that the Shortlink <b>%(host)s/&lt;ID&gt;</b> will
                 point to the new location after update.</p>
             </div>
             <form method="POST" action="update-id">
@@ -160,4 +172,5 @@ def handle_get(args):
             title = "I'm a teapot!"
             body = "Short and stout!"
 
-    return code, title, body, inserts
+    page = body % inserts
+    return code, title, page
