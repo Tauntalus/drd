@@ -94,8 +94,8 @@ def handle_post(args, form_data, context):
                     # maliciously omit fields. Moving forward,
                     # the response defaults to "bad request"
                     code = 400
-                    title = "Bad POST Request"
-                    body = "The form data we received from you doesn't match what we were expecting."
+                    title = "Bad Request"
+                    body = "The data we received from you doesn't match what we were expecting."
 
                     # Anyways, with the DB connection established,
                     # it's time to start making queries and building pages!
