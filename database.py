@@ -36,6 +36,7 @@ def try_create_table(conn, table, schema):
             print("DB: Created table %(table)s." % {"table":table_format})
         except Error as e:
             print(e)
+            conn = None
         finally:
             cursor.close()
             return conn
@@ -44,21 +45,28 @@ def try_create_table(conn, table, schema):
 # try_basic_select: given a connection, table name, fields, and optional WHERE clause,
 # attempts to process a SELECT query to get <fields> from <table> which satisfies <cond>
 # Returns connection, and query result.
-def try_basic_select(conn, table, fields, cond=None):
+# TODO: Remove SQL Injection vulnerability
+def try_basic_select(conn, table, fields, conds=None):
     ret = None
-    inserts = (table,) + fields
+
+    sql = "SELECT " + fields + " FROM " + table
     if conn:
         cursor = conn.cursor()
         try:
-            if cond:
-                inserts += cond
-                cursor.execute("SELECT ? FROM ? WHERE ?;", inserts)
+            if conds:
+
+                # TODO: MASSIVELY UNSAFE!!!!!
+                sql += " WHERE " + conds  # TODO: THIS RIGHT HERE!!!
+                # TODO: This is vulnerable to SQL Injection!
+                # TODO: Write a condition parser!
+
+                cursor.execute(sql)
                 print("DB: SELECT processed.")
-                print("DB: %(fields)s, %(table)s, %(cond)s" % {"fields": fields, "table": table, "cond": cond})
+                print("DB: Fields %(fields)s; Table %(table)s; Condition %(cond)s." % {"fields": fields, "table": table, "cond": conds})
             else:
-                cursor.execute("SELECT ? FROM ?;", inserts)
+                cursor.execute(sql)
                 print("DB: SELECT processed.")
-                print("DB: %(fields)s, %(table)s" % {"fields": fields, "table": table})
+                print("DB: Fields %(fields)s; Table %(table)s." % {"fields": fields, "table": table})
         except Error as e:
             print(e)
         finally:
@@ -75,7 +83,14 @@ def try_execute(conn, sql, inserts=None):
     if conn:
         cursor = conn.cursor()
         try:
-            ret = cursor.execute(sql, inserts)
+            if inserts:
+                cursor.execute(sql, inserts)
+            else:
+                cursor.execute(sql)
+
+            ret = cursor.fetchall()
+            print("DB: Executed SQL Statement.")
+            print("DB: Query \"%(sql)s\"; Result \"%(ret)s\"." % {"sql": sql, "ret": ret})
         except Error as e:
             print(e)
         finally:
@@ -88,6 +103,11 @@ def try_execute(conn, sql, inserts=None):
 def close(conn):
     conn.close()
     return conn
+
+
+# TODO: Write this to prevent SQL Injection
+def process_condition(cond):
+    return cond
 
 
 # DBInfo: A class for storing SQLite DB information
