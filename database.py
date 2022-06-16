@@ -1,145 +1,185 @@
-import stoid
-import random
+import sqlite3
+from sqlite3 import Error
 
 
-class LinkDB:
-    char_limit = 3
-    base = len(stoid.CHAR_MAP)
-    db = {}
+# TODO: Write this to prevent SQL Injection
+def process_condition(cond):
+    return cond
 
-    max_fail = 5
 
-    # add_rand: Add a new link to the database with a random ID
-    # Returns ID of link if successful, -X if fail
-    def add_rand(self, link):
-        if link in self.db.values():
-            val = [key for key, value in self.db.items() if value == link]
-            return val[0]
-        else:
-            link_id = random.randrange(pow(self.base, self.char_limit))
-            fails = 0
-            while self.db.get(link_id) and fails < self.max_fail:
-                link_id = random.randrange(pow(self.base, self.char_limit))
-                fails += 1
+# try_create_db: Creates a DB file if none exists at <target>
+# If successful, returns the connection. Otherwise, returns None.
+def try_connect_db(target):
+    conn = None
+    try:
+        conn = sqlite3.connect(target)
+        print("DB: Connected to database file \"%(file)s\"." % {"file": target})
+    except Error as e:
+        print("DB: Error")
+        print("DB: " + str(e))
+    finally:
+        return conn
 
-            # Failure can be dealt with by the managing function
-            if fails >= self.max_fail:
-                print("DB: Failed to add link %(link)s to database: Too many collisions!"
-                      % {"link": link})
-                return -1
+
+# try_create_table: given a connection, table name, and fields, and bijective flag,
+# attempts to create a table that matches the schema.
+# returns connection on success, None on fail
+# TODO: harden against SQL injection
+def try_create_table(conn, table, schema, biject=False):
+    # From table info, build SQL string
+    table_format = "'" + str(table) + "'" + " ("
+    for field in schema:
+        table_format += str(field)
+        if biject:
+            table_format += " NOT NULL UNIQUE"
+        table_format += ", "
+    table_format = table_format[:-2]  # Cut away redundant extra ", "
+    table_format += ")"
+
+    if conn:
+        cursor = conn.cursor()
+        try:
+            cursor.execute("CREATE TABLE IF NOT EXISTS %(sql)s" % {"sql": table_format})  # TODO: SQL Injection Hazard!
+            print("DB: Created table %(table)s." % {"table":table_format})
+        except Error as e:
+            print("DB: Error")
+            print("DB: " + str(e))
+        finally:
+            cursor.close()
+            return conn
+
+
+# try_execute: given a connection, SQL query, and insertion list,
+# attempts to execute the SQL query as written.
+# Returns connection, and query result.
+def try_execute(conn, sql, values=None):
+    ret = None
+    if conn:
+        cursor = conn.cursor()
+        try:
+            if values:
+                if not isinstance(values, tuple):
+                    values = (values,)
+                cursor.execute(sql, values)
             else:
-                self.db[link_id] = link
-                print("DB: Added link %(link)s with ID #%(id)d to database."
-                      % {"link": link, "id": link_id})
-                return link_id
+                cursor.execute(sql)
 
-    # add_with_id: Add a new link with a specific ID
-    # Returns ID of link if successful, -X if fail
-    def add_with_id(self, link, link_id):
-        if link_id >= pow(self.base, self.char_limit) or link_id < 0:
-            print("DB: Failed to add link %(link)s with ID #%(id)d to database: ID out of range!"
-                  % {"link": link, "id": link_id})
-            return -2
-
-        if self.db.get(link_id):
-            print("DB: Failed to add link %(link)s with ID #%(id)d to database: ID already taken!"
-                  % {"link": link, "id": link_id})
-            return -1
-
-        else:
-            self.db[link_id] = link
-            print("DB: Added link %(link)s with ID #%(id)d to database."
-                  % {"link": link, "id": link_id})
-            return link_id
-
-    # remove_by_id: Removes an item with a specific ID
-    # Returns ID of link if successful, -X if fail
-    def remove_by_id(self, link_id):
-        if link_id >= pow(self.base, self.char_limit) or link_id < 0:
-            print("DB: Failed to remove link with ID #%(id)d from database: ID out of range!"
-                  % {"id": link_id})
-            return -2
-        if self.db.get(link_id):
-            link = self.db[link_id]
-            del self.db[link_id]
-            print("DB: Removed link %(link)s with ID #%(id)d from database."
-                  % {"link": link, "id": link_id})
-            return link_id
-        else:
-            print("DB: Failed to remove link with ID #%(id)d from database: ID not found!"
-                  % {"id": link_id})
-            return -1
-
-    # remove_by_link: Removes a specific link from the DB
-    # Returns ID of link if successful, -X if fail
-    def remove_by_link(self, link):
-        if link in self.db.values():
-            val = [key for key, value in self.db.items() if value == link]
-            link_id = val[0]
-            del self.db[link_id]
-            print("DB: Removed link %(link)s with ID #%(id)d from database."
-                  % {"link": link, "id": link_id})
-            return link_id
-        else:
-            print("DB: Failed to remove link %(link)s from database: Link not found!"
-                  % {"link": link})
-            return -1
-
-    # update_by_id: updates an ID with a new link.
-    # Returns ID of link if successful, -X if fail
-    def update_by_id(self, link_id, new_link):
-        if link_id >= pow(self.base, self.char_limit) or link_id < 0:
-            print("DB: Failed to update ID #%(id)d to new link %(link)s: ID out of range!"
-                  % {"link": new_link, "id": link_id})
-            return -2
-
-        if self.db.get(link_id) and new_link not in self.db.values():
-            self.db[link_id] = new_link
-            print("DB: Updated ID #%(id)d to new link %(link)s."
-                  % {"link": new_link, "id": link_id})
-            return link_id
-        elif new_link in self.db.values():
-            val = [key for key, value in self.db.items() if value == new_link]
-            print("DB: Failed to update ID #%(id)d to new link %(link)s: Link already in database!"
-                  % {"link": new_link, "id": link_id})
-            return val[0]
-        else:
-            print("DB: Failed to update ID #%(id)d to new link %(link)s: ID not found!"
-                  % {"link": new_link, "id": link_id})
-            return -1
-
-    def update_by_link(self, link, new_id):
-        if new_id >= pow(self.base, self.char_limit) or new_id < 0:
-            print("DB: Failed to update link %(link)s to new ID #%(id)d: ID out of range!"
-                  % {"link": link, "id": new_id})
-            return -2
-        elif self.db.get(new_id):
-            print("DB: Failed to update link %(link)s with ID #%(id)d to database: ID already taken!"
-                  % {"link": link, "id": new_id})
-            return -1
-        elif link in self.db.values():
-            val = [key for key, value in self.db.items() if value == link]
-            self.db[new_id] = link
-            ec = self.remove_by_id(val[0]) #TODO: Doublecheck error checking here
-            print("DB: Updated link %(link)s to new ID #%(id)d."
-                  % {"link": link, "id": new_id})
-            return new_id
-        else:
-            print("DB: Failed to update link %(link)s with ID #%(id)d to database: Link not found!"
-                  % {"link": link, "id": new_id})
-            return -3
+            ret = cursor.fetchall()
+            print("DB: Executed SQL Statement.")
+            print("DB: Query \"%(sql)s\"; Result \"%(ret)s\"." % {"sql": sql, "ret": ret})
+        except Error as e:
+            print("DB: Error")
+            print("DB: " + str(e))
+        finally:
+            cursor.close()
+            return conn, ret
 
 
-    # get_link_by_id: Returns the DB entry for a given ID
-    # returns the link, or None if no matching ID is found.
-    def get_link_by_id(self, link_id):
-        return self.db.get(link_id)
+# try_basic_select: given a connection, table name, fields, and optional WHERE clause,
+# attempts to process a SELECT query to get <fields> from <table> which satisfies <cond>
+# Returns connection, and query result.
+# TODO: SQL Injection Hardening
+# TODO: Problem areas: conds
+def try_select(conn, table, fields, conds=None):
+    ret = None
 
-    # get_id_by_link: Returns the ID for a given link
-    # returns the ID, or None if no matching link is found.
-    def get_id_by_link(self, link):
-        if link in self.db.values():
-            val = [key for key, value in self.db.items() if value == link]
-            return val[0]
-        else:
-            return None
+    sql = "SELECT '" + fields + "' FROM '" + table + "';"
+    if conn:
+        cursor = conn.cursor()
+        try:
+            if conds:
+                sql += " WHERE " + conds  # TODO: SQL Injection Hazard!
+
+                cursor.execute(sql)
+                print("DB: SELECT processed.")
+                print("DB: Fields %(fields)s; Table %(table)s; Condition %(cond)s." % {"fields": fields, "table": table, "conds": conds})
+            else:
+                cursor.execute(sql)
+                print("DB: SELECT processed.")
+                print("DB: Fields %(fields)s; Table %(table)s." % {"fields": fields, "table": table})
+        except Error as e:
+            print("DB: Error")
+            print("DB: " + str(e))
+        finally:
+            cursor.close()
+            return conn, ret
+
+
+# try_insert: given a connection, table name, and value tuple,
+# attempts to insert <values> into <table>
+# Returns connection.
+def try_insert(conn, table, values):
+    sql = "INSERT INTO '" + table + "' VALUES (?, ?)"
+    if conn:
+        cursor = conn.cursor()
+        try:
+            ret = cursor.execute(sql, values)
+            print("DB: INSERT processed.")
+            print("DB: Table %(table)s; Values %(val)s." % {"table": table, "val": values})
+        except Error as e:
+            print("DB: Error")
+            print("DB: " + str(e))
+        finally:
+            cursor.close()
+            return conn, ret
+
+
+# try_delete: given a connection, table name, and conditions,
+# attempts to remove rows from <table> that match <conds>
+# Returns connection.
+# TODO: SQL Injection Hardening
+# TODO: Problem areas: conds
+def try_delete(conn, table, conds):
+    sql = "DELETE FROM '" + table + "' WHERE " + conds  # TODO: SQL Injection Hazard!
+    if conn:
+        cursor = conn.cursor()
+        try:
+            ret = cursor.execute(sql)
+            print("DB: DELETE Processed.")
+            print("DB: Table %(table)s; Conditions %(conds)s." % {"table": table, "conds": conds})
+        except Error as e:
+            print("DB: Error")
+            print("DB: " + str(e))
+        finally:
+            cursor.close()
+            return conn, ret
+
+
+# TODO: SQL Injection Hardening
+# TODO: Problem areas: values, conds
+def try_update(conn, table, values, conds):
+    sql = "UPDATE '" + table + "' SET " + values + " WHERE " + conds  # TODO: SQL Injection Hazard!
+    if conn:
+        cursor = conn.cursor()
+        try:
+            ret = cursor.execute(sql)
+            print("DB: UPDATE Processed.")
+            print("DB: Table %(table)s; Values %(val)s; Conditions %(conds)s." % {"table": table, "val": values, "conds": conds})
+        except Error as e:
+            print("DB: Error")
+            print("DB: " + str(e))
+        finally:
+            cursor.close()
+            return conn, ret
+
+
+# close: commits operations and closes the DB connection.
+# returns the closed connection.
+def close(conn):
+    conn.commit()
+    conn.close()
+    print("DB: Changes committed.")
+    return conn
+
+
+# DBInfo: A class for storing SQLite DB information
+# members:
+#   :name   :type                   :description
+#   file    - string,               the SQLite DB file location
+#   tables  - tuple/string,         the names of the tables in the SQLite DB
+#   schemas - tuple/tuple/string,   the schema for each table in the SQLite DB
+class DBInfo:
+    def __init__(self, file, tables, schemas):
+        self.file = file
+        self.tables = tables
+        self.schemas = schemas
