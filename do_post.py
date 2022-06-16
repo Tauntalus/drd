@@ -28,7 +28,7 @@ def validate_form_data(form_data, charset, ext_limit):
         link_flag = 1
     # Character ID validation
     if ext:
-        ext = str(ext)
+        ext = str(ext).upper()
         regex = "[" + charset + "]+"
         if not search(regex, ext) or 0 >= len(ext) > ext_limit:
             print("Validator: Extension is not a valid character sequence.")
