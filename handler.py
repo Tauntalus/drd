@@ -5,14 +5,21 @@ from do_post import handle_post
 
 # Handler: Custom HTTP Request Handler
 class Handler(BaseHTTPRequestHandler):
-    # TODO: BIG TODO!
-    # TODO: Make constants pull from a config file!
-    name = "Domain ReDirector"
-    server_address = "localhost"
 
-    charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    id_limit = 3
-    max_fails = 100
+    # This object contains all the relevant context
+    # needed for dynamic request responses.
+    context = {
+        "name": "Domain ReDirector",
+        "host": "localhost",
+
+        "charset": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+        "id_limit": 3,
+        "fail_limit": 100,
+
+        "db_file": "db/drd.db",
+        "db_table": "links",
+        "db_schema": ("id", "link")
+    }
 
     error_message_format = """
     <head>
@@ -22,7 +29,24 @@ class Handler(BaseHTTPRequestHandler):
         <h2>%(message)s</h2>
         <p>%(explain)s</p>
         <a href="/">Main Page</a>
-    </body>""".format(name)
+    </body>""".format(context["name"])
+
+    default_format = """
+    <html>
+        <head>
+            <style>%(css)s</style>
+            <title>{} - %(title)s</title>
+        </head>
+        <body>
+            <div class="page">
+                <a href="/" class="no-style"><h1>%(name)s</h1></a>
+                <hr>
+                %(body)s
+                <br>
+                <a href="/" class="button">Main Page</a>
+            </div>
+        </body>
+    </html>""".format(context["name"])
 
     css_format = """
     body {
@@ -86,41 +110,19 @@ class Handler(BaseHTTPRequestHandler):
 
     # TODO: Look into dynamic resolution of server address
     def get_server_address(self):
-        return self.server_address
+        return self.context["server_address"]
 
     # send_page: accepts a response code, page title, and page body
     # then sends a well-formatted HTML response to the requester
     # TODO: Improve header information
-    def send_page(self, code, title, page):
+    def send_page(self, code, title, body):
         self.send_response(code)
         self.send_header("Content-type", "text/html")
         self.end_headers()
-
-        self.wfile.write(bytes("<html>", "utf-8"))
-        self.wfile.write(bytes(
-            """<head>
-                <style>%(css)s</style>
-                <title>%(name)s - %(title)s</title>
-            </head>"""
-            % {"css": self.css_format, "name": self.name, "title": title}, "utf-8"))
-        self.wfile.write(bytes(
-            """<body>
-                <div class="page">
-                    <a href="/" class="no-style"><h1>%(name)s</h1></a><hr>
-                    %(body)s"""
-            % {"name": self.name, "body": page}, "utf-8"))
-
-        if title != "Main Page":
-            self.wfile.write(bytes(
-                    """<div>
-                        <a href="/" class="button">Home Page</a>
-                    </div>""", "utf-8"))
-
-        self.wfile.write(bytes(
-                """</div>
-            </body>""", "utf-8"))
-
-        self.wfile.write(bytes("</html>", "utf-8"))
+        self.wfile.write(bytes(self.default_format % {"css": self.css_format,
+                                                      "title": title,
+                                                      "name": self.context["name"],
+                                                      "body": body}, "utf-8"))
         return
 
     # redirect - Redirects the user to a given location
@@ -176,15 +178,9 @@ class Handler(BaseHTTPRequestHandler):
         # Stripping off the leading slash
         args = str(self.path)[1:].split('/')
 
-        code, title, body, inserts = handle_get(args)
+        code, title, body = handle_get(args, self.context)
 
-        # Additional inserts that are only available outside the handler
-        # Don't want to have to send more arguments into the function than necessary
-        inserts["host"] = self.server_address
-        inserts["lim"] = self.id_limit
-        page = body % inserts
-
-        self.interpret_http_code(code, title, page)
+        self.interpret_http_code(code, title, body)
         return
 
     # do_POST: POST request handler
@@ -193,16 +189,12 @@ class Handler(BaseHTTPRequestHandler):
         args = self.path[1:].split('/')
         form_data = self.process_form()
 
-        code, title, body, inserts, fail_flag = handle_post(args, form_data, self.charset, self.id_limit, self.max_fails)
+        code, title, body, fail_flag = handle_post(args, form_data, self.context)
 
         # If during a random insertion, we fail to add an ID a certain amount of times,
         # we permanently increase the length of URLs in the database.
         if fail_flag:
-            self.id_limit += 1
+            self.context["id_limit"] += 1
 
-        inserts["host"] = self.server_address
-        inserts["lim"] = self.id_limit
-        page = body % inserts
-
-        self.interpret_http_code(code, title, page)
+        self.interpret_http_code(code, title, body)
         return
