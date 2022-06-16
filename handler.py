@@ -12,6 +12,7 @@ class Handler(BaseHTTPRequestHandler):
 
     charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
     id_limit = 3
+    max_fails = 100
 
     error_message_format = """
     <head>
@@ -102,7 +103,7 @@ class Handler(BaseHTTPRequestHandler):
                 <title>%(name)s - %(title)s</title>
             </head>"""
             % {"css": self.css_format, "name": self.name, "title": title}, "utf-8"))
-        self.wfile.write(bytes(  # TODO: Header link may need a revisit
+        self.wfile.write(bytes(
             """<body>
                 <div class="page">
                     <a href="/" class="no-style"><h1>%(name)s</h1></a><hr>
@@ -179,7 +180,7 @@ class Handler(BaseHTTPRequestHandler):
 
         # Additional inserts that are only available outside the handler
         # Don't want to have to send more arguments into the function than necessary
-        inserts["addr"] = self.server_address
+        inserts["host"] = self.server_address
         inserts["lim"] = self.id_limit
         page = body % inserts
 
@@ -192,7 +193,12 @@ class Handler(BaseHTTPRequestHandler):
         args = self.path[1:].split('/')
         form_data = self.process_form()
 
-        code, title, body, inserts = handle_post(args, form_data, self.charset, self.id_limit)
+        code, title, body, inserts, fail_flag = handle_post(args, form_data, self.charset, self.id_limit, self.max_fails)
+
+        # If during a random insertion, we fail to add an ID a certain amount of times,
+        # we permanently increase the length of URLs in the database.
+        if fail_flag:
+            self.id_limit += 1
 
         # TODO: Potential extra inserts
         page = body % inserts

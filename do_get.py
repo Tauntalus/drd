@@ -112,8 +112,8 @@ def handle_get(args):
             body = """
             <h2>Update An Existing Link</h2><br>
             <div>
-                <p>Please understand that any Shortlinks for this link will
-                no longer work after update.</p>
+                <p>Please understand that any existing Shortlinks for this link
+                will no longer work after update.</p>
             </div>
             <form method="POST" action="update">
                 <div>
