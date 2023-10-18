@@ -2,7 +2,6 @@ from http.server import BaseHTTPRequestHandler
 from do_get import handle_get
 from do_post import handle_post
 
-
 # Handler: Custom HTTP Request Handler
 class Handler(BaseHTTPRequestHandler):
 
