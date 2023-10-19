@@ -91,7 +91,7 @@ def handle_get(args, context):
                 ext = splitext(file_path)[-1][1:]
                 if ext in ("css", "html", "txt"):
                     c_type = "text/" + ext
-                elif ext in ("jpg", "jpeg", "png", "bmp", "ico", "img"):
+                elif ext in ("jpg", "jpeg", "png", "bmp", "ico", "img", "gif"):
                     c_type = "image/" + ext
                 # if unsure, send as plaintext
                 else:
