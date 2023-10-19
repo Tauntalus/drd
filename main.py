@@ -1,11 +1,13 @@
 from handler import Handler
 from http.server import HTTPServer
-
+import configparser
 
 # Main Method - kick up server, watch for interrupt
 def main():
-    host = "localhost"
-    port = 80
+    # Get server info from .ini file
+    cfg = configparser.ConfigParser()
+    host = cfg["site"]["host"]
+    port = int(cfg["site"]["port"])
 
     ws = HTTPServer((host, port), Handler)
     print("Server started at http://%(host)s on port %(port)s." % {"host": host, "port": port})
