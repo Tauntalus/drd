@@ -21,22 +21,11 @@ def handle_get(args, context):
     body = "It looks like the page you're looking for doesn't exist."
 
     if len(args) > 0:
-        if args[0] == '':
+        print(args[0])
+        if args[0] in ('', "main", "index"):
             code = 200
             title = "Main Page"
-            body = """
-            <h2>Welcome to the Domain ReDirector!</h2>
-            <br>
-            <div>
-                <div>
-                    <a href="/register" class="button">Create a New Shortlink</a>
-                    <a href="/remove-id" class="button">Remove an Existing Shortlink</a>
-                </div>
-                <div>
-                    <a href="/update" class="button">Update a Shortlink's Destination</a>
-                    <a href="/update-id" class="button">Change a Link's Shortlink</a>
-                </div>
-            </div>"""
+            body = open("resources/index.html", "r").read()
 
         elif args[0] == "register":
             code = 200
