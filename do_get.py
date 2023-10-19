@@ -41,7 +41,7 @@ def handle_get(args, context):
         if args[0] in titles.keys():
             code = 200
             title = titles[args[0]]
-            body = open("resources/pages/" + args[0] + ".html", "r").read()
+            body = open("resources/get/" + args[0] + ".html", "r").read()
 
         # If trying to get a resource, shortcut the system
         elif args[0] == "resources":
