@@ -24,93 +24,11 @@ class Handler(BaseHTTPRequestHandler):
         "db_schema": (cfg["table1"]["field1"], cfg["table1"]["field2"])
     }
 
-    error_message_format = """
-    <head>
-        <title>{} - Error %(code)d</title>
-    </head>
-    <body>
-        <h2>%(message)s</h2>
-        <p>%(explain)s</p>
-        <a href="/">Main Page</a>
-    </body>""".format(context["name"])
+    error_message_format = open("resources/error.snip", "r").read().format(context["name"])
 
-    default_format = """
-    <html>
-        <head>
-            <style>%(css)s</style>
-            <title>{} - %(title)s</title>
-        </head>
-        <body>
-            <div class="page">
-                <a href="/" class="no-style"><h1>%(name)s</h1></a>
-                <hr>
-                %(body)s
-                <br>
-                <a href="/" class="button">Main Page</a>
-            </div>
-        </body>
-    </html>""".format(context["name"])
+    default_format = open("resources/default.snip", "r").read().format(context["name"])
 
-    css_format = """
-    body {
-        background-color: #D6D6FF;
-        margin: 1%;
-    }
-    
-    div {
-        padding: 1%;
-    }
-    
-    form {
-        align: right;
-        margin: auto;
-        width: 30%;
-    }
-    
-    .page {
-        background-color: #E6E6FF;
-        margin: auto;
-        width: 90%;
-        text-align: center;
-    }
-    
-    .grid {
-        display: flex;
-        flex-direction: row;
-        width: 35%;
-        align-self: center;
-        justify-content: space-between;
-    }
-    
-    .no-style {
-        color: initial;
-        text-decoration: none;
-    }
-    
-    .button {
-        text-decoration: none;
-        color: initial;
-        
-        border: 0.25em solid #D0D0D0;
-        border-radius: 0.25em;
-        
-        padding: 0.1em 0.25em;
-        background-color: #E6E6E6;
-    }
-    
-    :hover {
-        cursor: pointer;
-    }
-    
-    :active {
-        background-color: #D6D6D6;
-        border: 0.3em solid #C6C6C6;
-    }
-    
-    :invalid {
-    }
-    """
-
+    css_format = open("resources/style.css", "r").read()
     # TODO: Look into dynamic resolution of server address
     def get_server_address(self):
         return self.context["server_address"]
