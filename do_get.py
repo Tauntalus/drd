@@ -43,9 +43,9 @@ def handle_get(args, context):
             title = titles[args[0]]
             body = open("resources/get/" + args[0] + ".html", "r").read()
 
-        #Teapot :D
-        elif args[0] == "teapot":
-            code = 418
+            #Teapot :D
+            if args[0] == "teapot":
+                code = 418
 
         elif args[0].isalpha() and len(args[0]) <= id_limit:
             conn = database.try_connect_db(db_file)
