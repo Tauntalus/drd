@@ -1,0 +1,16 @@
+<h2>Remove An Existing Shortlink</h2>
+<br>
+<div>
+    <p>Please understand that the Shortlink <b>%(host)s/&lt;ID&gt;</b> will
+    no longer work after removal.</p>
+</div>
+<form method="POST" action="remove-id">
+    <div>
+        <label for="ext">%(lim)d-letter ID: </label>
+        <input type="text" id="ext" name="ext" 
+        minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
+    </div>
+    <div>
+        <input type=submit value="Remove">
+    </div>
+</form>

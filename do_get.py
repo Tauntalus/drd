@@ -1,5 +1,7 @@
 import database
 from stoid import stoid
+from os.path import isfile
+
 # handle_get: Accepts args[] representing a split URL and returns
 # a HTTP response <code>, a page <title>, and a page <body>
 # TODO: Move HTML pages to external resource
@@ -20,151 +22,41 @@ def handle_get(args, context):
     title = "Page Not Found"
     body = "It looks like the page you're looking for doesn't exist."
 
+    # Dictionary for easy editing of page titles
+    titles = {
+        "index": "Main Page",
+        "register": "Register A Link",
+        "register-id": "Register A Shortlink",
+        "remove": "Remove A Link",
+        "remove-id": "Remove A Shortlink",
+        "update": "Update A Link",
+        "update-id": "Update A Shortlink",
+        "teapot": "I'm a Teapot!"
+    }
+
     if len(args) > 0:
-        print(args[0])
         if args[0] in ('', "main", "index"):
+            args[0] = "index"
+        
+        if args[0] in titles.keys():
             code = 200
-            title = "Main Page"
-            body = open("resources/index.html", "r").read()
+            title = titles[args[0]]
+            body = open("resources/pages/" + args[0] + ".html", "r").read()
 
-        elif args[0] == "register":
-            code = 200
-            title = "Register a Link"
-
-            body = """
-            <h2>Register a New Link</h2>
-            <br>
-            <form method="POST" action="register">
-                <div>
-                    <label for="link">Link to register: </label>
-                    <input type="url" id="link" name="link" required>
-                </div>
-                <div>
-                    <input type=submit value="Register">
-                </div>
-            </form>"""
-
-        elif args[0] == "register-id":
-            code = 200
-            title = "Register A Link"
-
-            body = """
-            <h2>Register a New Link With An ID</h2>
-            <br>
-            <form method="POST" action="register-id">
-                <div>
-                    <label for="link">Link to register: </label>
-                    <input type="url" id="link" name="link" required>
-                </div>
-                <div>
-                    <label for="ext">%(lim)d-letter ID: </label>
-                    <input type="text" id="ext" name="ext" 
-                    minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
-                </div>
-                <div>
-                    <input type=submit value="Register">
-                </div>
-            </form>"""
-
-        elif args[0] == "remove":
-            code = 200
-            title = "Remove A Link"
-
-            body = """
-            <h2>Remove An Existing Link</h2>
-            <br>
-            <div>
-                <p>Please understand that any short links for this link will
-                no longer work after removal.</p>
-            </div>
-            <form method="POST" action="remove">
-                <div>
-                    <label for="link">Link to remove: </label>
-                    <input type="url" id="link" name="link" required>
-                </div>
-                <div>
-                    <input type=submit value="Remove">
-                </div>
-            </form>"""
-
-        elif args[0] == "remove-id":
-            code = 200
-            title = "Remove A Shortlink"
-
-            body = """
-            <h2>Remove An Existing Shortlink</h2>
-            <br>
-            <div>
-                <p>Please understand that the Shortlink <b>%(host)s/&lt;ID&gt;</b> will
-                no longer work after removal.</p>
-            </div>
-            <form method="POST" action="remove-id">
-                <div>
-                    <label for="ext">%(lim)d-letter ID: </label>
-                    <input type="text" id="ext" name="ext" 
-                    minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
-                </div>
-                <div>
-                    <input type=submit value="Remove">
-                </div>
-            </form>"""
-
-        elif args[0] == "update":
-            code = 200
-            title = "Update A Link"
-
-            body = """
-            <h2>Update An Existing Link</h2>
-            <br>
-            <div>
-                <p>Please understand that any existing Shortlinks for this link
-                will no longer work after update.</p>
-            </div>
-            <form method="POST" action="update">
-                <div>
-                    <label for="link">Link to update: </label>
-                    <input type="url" id="link" name="link" required>
-                </div>
-                <div>
-                    <label for="ext">New %(lim)d-letter ID: </label>
-                    <input type="text" id="ext" name="ext" 
-                    minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
-                </div>
-                <div>
-                    <input type=submit value="Update">
-                </div>
-            </form>"""
-
-        elif args[0] == "update-id":
-            code = 200
-            title = "Update A Shortlink"
-
-            body = """
-            <h2>Update An Existing Shortlink</h2>
-            <br>
-            <div>
-                <p>Please understand that the Shortlink <b>%(host)s/&lt;ID&gt;</b> will
-                point to the new location after update.</p>
-            </div>
-            <form method="POST" action="update-id">
-                <div>
-                    <label for="ext">%(lim)d-letter ID: </label>
-                    <input type="text" id="ext" name="ext" 
-                    minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
-                </div>
-                <div>
-                    <label for="link">New link: </label>
-                    <input type="url" id="link" name="link" required>
-                </div>
-                <div>
-                    <input type=submit value="Update">
-                </div>
-            </form>"""
-
-        elif args[0] == "teapot":
-            code = 418
-            title = "I'm a teapot!"
-            body = "Short and stout!"
+        # If trying to get a resource, shortcut the system
+        elif args[0] == "resources":
+            # rebuild filepath
+            file_path = ""
+            for e in args:
+                file_path += e + "/"
+            file_path = file_path[:-1]
+            print(file_path)
+            if isfile("./"+ file_path):
+                code = 200
+                title = file_path
+                body = open(file_path, "r").read()
+                return code, title, body
+            
 
         elif args[0].isalpha() and len(args[0]) <= id_limit:
             conn = database.try_connect_db(db_file)
@@ -196,6 +88,10 @@ def handle_get(args, context):
                 code = 500
                 title = "Internal Error - Database Failed To Initialize"
                 body = "The connection to our database failed to initialize. We can't do anything without that!"
+
+        #Teapot :D
+        if args[0] == "teapot":
+            code = 418
 
     page = body % inserts
     return code, title, page

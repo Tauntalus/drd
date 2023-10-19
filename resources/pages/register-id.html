@@ -1,0 +1,16 @@
+<h2>Register a New Link With An ID</h2>
+<br>
+<form method="POST" action="register-id">
+    <div>
+        <label for="link">Link to register: </label>
+        <input type="url" id="link" name="link" required>
+    </div>
+    <div>
+        <label for="ext">%(lim)d-letter ID: </label>
+        <input type="text" id="ext" name="ext" 
+        minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
+    </div>
+    <div>
+        <input type=submit value="Register">
+    </div>
+</form>

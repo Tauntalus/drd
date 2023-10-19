@@ -2,6 +2,7 @@ from http.server import BaseHTTPRequestHandler
 from do_get import handle_get
 from do_post import handle_post
 import configparser
+from os.path import isfile
 
 # Handler: Custom HTTP Request Handler
 class Handler(BaseHTTPRequestHandler):
@@ -26,6 +27,7 @@ class Handler(BaseHTTPRequestHandler):
 
     error_message_format = open("resources/error.html", "r").read().format(context["name"])
     default_format = open("resources/default.html", "r").read().format(context["name"])
+
     # TODO: Look into dynamic resolution of server address
     def get_server_address(self):
         return self.context["server_address"]
@@ -40,6 +42,20 @@ class Handler(BaseHTTPRequestHandler):
 
         self.send_response(code)
         self.send_header("Content-type", "text/html")
+        self.send_header('Connection', 'close')
+        self.send_header('Content-Length', int(len(page)))
+        self.end_headers()
+        if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
+            self.wfile.write(bytes(page, "utf-8"))
+        return
+    
+    # send_resource: accepts a response code and resource contents
+    # then sends the resource to the requester
+    # TODO: Improve header information
+    def send_resource(self, code, content):
+        page = content
+        self.send_response(code)
+        self.send_header("Content-type", "text/css")
         self.send_header('Connection', 'close')
         self.send_header('Content-Length', int(len(page)))
         self.end_headers()
@@ -73,6 +89,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         # OK responses
         elif 200 <= code < 300:
+            if isfile("./" + title):
+                self.send_resource(code, body)
             self.send_page(code, title, body)
             return
         # Redirect responses - body contains linked resource

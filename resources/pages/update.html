@@ -1,0 +1,20 @@
+<h2>Update An Existing Link</h2>
+<br>
+<div>
+    <p>Please understand that any existing Shortlinks for this link
+    will no longer work after update.</p>
+</div>
+<form method="POST" action="update">
+    <div>
+        <label for="link">Link to update: </label>
+        <input type="url" id="link" name="link" required>
+    </div>
+    <div>
+        <label for="ext">New %(lim)d-letter ID: </label>
+        <input type="text" id="ext" name="ext" 
+        minlength=%(lim)d maxlength=%(lim)d pattern="[A-Za-z]{%(lim)d}" required>
+    </div>
+    <div>
+        <input type=submit value="Update">
+    </div>
+</form>
