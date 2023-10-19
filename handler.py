@@ -24,11 +24,8 @@ class Handler(BaseHTTPRequestHandler):
         "db_schema": (cfg["table1"]["field1"], cfg["table1"]["field2"])
     }
 
-    error_message_format = open("resources/error.snip", "r").read().format(context["name"])
-
-    default_format = open("resources/default.snip", "r").read().format(context["name"])
-
-    css_format = open("resources/style.css", "r").read()
+    error_message_format = open("resources/error.html", "r").read().format(context["name"])
+    default_format = open("resources/default.html", "r").read().format(context["name"])
     # TODO: Look into dynamic resolution of server address
     def get_server_address(self):
         return self.context["server_address"]
@@ -37,8 +34,7 @@ class Handler(BaseHTTPRequestHandler):
     # then sends a well-formatted HTML response to the requester
     # TODO: Improve header information
     def send_page(self, code, title, body):
-        page = self.default_format % {"css": self.css_format,
-                                      "title": title,
+        page = self.default_format % {"title": title,
                                       "name": self.context["name"],
                                       "body": body}
 
