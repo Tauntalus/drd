@@ -1,6 +1,6 @@
 import database
 from stoid import stoid
-from os.path import isfile
+from os.path import isfile, splitext
 
 # Dictionary for easy editing of page titles
 titles = {
@@ -28,6 +28,8 @@ def handle_get(args, context):
 
     charset = context["charset"]
     inserts = {"name": name, "host": host, "lim": id_limit}
+
+    c_type = None
 
     # Default to 404
     code = 404
@@ -85,12 +87,20 @@ def handle_get(args, context):
             for e in args:
                 file_path += e + "/"
             file_path = file_path[:-1]
-            print(file_path)
             if isfile("./"+ file_path):
+                ext = splitext(file_path)[-1][1:]
+                if ext in ("css", "html", "txt"):
+                    c_type = "text/" + ext
+                elif ext in ("jpg", "jpeg", "png", "bmp", "ico", "img"):
+                    c_type = "image/" + ext
+                # if unsure, send as plaintext
+                else:
+                    c_type = "text/plain"
                 code = 200
                 title = file_path
-                body = open(file_path, "r").read()
-                return code, title, body
+
+                body = open(file_path, "rb").read()
+                return code, title, body, c_type
 
     page = body % inserts
-    return code, title, page
+    return code, title, page, c_type

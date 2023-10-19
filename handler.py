@@ -50,18 +50,19 @@ class Handler(BaseHTTPRequestHandler):
         return
     
     # send_resource: accepts a response code and resource contents
-    # then sends the resource to the requester
+    # then analyzes and sends the resource to the requester
     # TODO: Improve header information
-    def send_resource(self, code, content):
+    def send_resource(self, code, content, c_type):
         page = content
         self.send_response(code)
+        self.send_header("Content-type", c_type)
         self.send_header('Connection', 'close')
         self.send_header('Content-Length', int(len(page)))
         self.end_headers()
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
-            self.wfile.write(bytes(page, "utf-8"))
+            self.wfile.write(bytes(page))
         return
-
+    
     # redirect - Redirects the user to a given location
     def redirect(self, code, link):
         self.send_response(code)
@@ -81,7 +82,7 @@ class Handler(BaseHTTPRequestHandler):
 
         return form_dict
 
-    def interpret_http_code(self, code, title, body):
+    def interpret_http_code(self, code, title, body, c_type):
         # TODO: Improve responses to different codes
         # Information responses (not implemented)
         if 100 <= code < 200:
@@ -89,7 +90,7 @@ class Handler(BaseHTTPRequestHandler):
         # OK responses
         elif 200 <= code < 300:
             if isfile("./" + title):
-                self.send_resource(code, body)
+                self.send_resource(code, body, c_type)
             else:
                 self.send_page(code, title, body)
             return
@@ -119,13 +120,14 @@ class Handler(BaseHTTPRequestHandler):
 
     # do_GET: GET request handler
     def do_GET(self):
+        return_type = None
         # This line gets the path as a list of arguments,
         # Stripping off the leading slash
         args = str(self.path)[1:].split('/')
 
-        code, title, body = handle_get(args, self.context)
+        code, title, body, c_type = handle_get(args, self.context)
 
-        self.interpret_http_code(code, title, body)
+        self.interpret_http_code(code, title, body, c_type)
         return
 
     # do_POST: POST request handler
