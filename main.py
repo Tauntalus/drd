@@ -5,6 +5,7 @@ import configparser
 # Main Method - kick up server, watch for interrupt
 def main():
     # Get server info from .ini file
+    # TODO: pass cfg into handler directly
     cfg = configparser.ConfigParser()
     cfg.read("settings.ini")
     host = cfg["site"]["host"]

@@ -19,6 +19,7 @@ class Handler(BaseHTTPRequestHandler):
         "fail_limit": int(cfg["database"]["fail_limit"]),
         "db_file": cfg["database"]["db_file"],
 
+        #TODO: generate tables dynamically
         "db_table": cfg["tables"]["table1"],
         "db_schema": (cfg["table1"]["field1"], cfg["table1"]["field2"])
     }
