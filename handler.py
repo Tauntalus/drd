@@ -141,6 +141,9 @@ class Handler(BaseHTTPRequestHandler):
         # we permanently increase the length of URLs in the database.
         if fail_flag:
             self.context["id_limit"] += 1
+            self.cfg["database"]["id_limit"] = self.context["id_limit"]
+            with open("settings.ini", "w") as configfile:
+                self.cfg.write(configfile)
 
         self.interpret_http_code(code, title, body)
         return
