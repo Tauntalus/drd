@@ -287,6 +287,9 @@ def remove(conn, ret, link):
     return conn, ret, code, body
 
 def remove_id(conn, ret, link_id):
+    code = 500
+    body = None
+
     conn, ret = database.try_execute(conn,
                                     "SELECT * FROM links WHERE id=?",
                                     link_id)
@@ -351,6 +354,7 @@ def link_registered(conn, ret, context, link):
 
     code = 500
     body = None
+    
     conn, ret = database.try_execute(conn,
                                     "SELECT * FROM links WHERE link=?",
                                     link)
