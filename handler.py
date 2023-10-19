@@ -60,7 +60,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Content-Length', int(len(page)))
         self.end_headers()
         if self.command != 'HEAD' and code >= 200 and code not in (204, 304):
-            self.wfile.write(bytes(page))
+            self.wfile.write(bytes(page)) #TODO: add proper encoding, instead of just a random bytestream and praying the browser figures it out
         return
     
     # redirect - Redirects the user to a given location
