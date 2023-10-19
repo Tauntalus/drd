@@ -17,10 +17,10 @@ class Handler(BaseHTTPRequestHandler):
         "charset": cfg["database"]["charset"],
         "id_limit": int(cfg["database"]["id_limit"]),
         "fail_limit": int(cfg["database"]["fail_limit"]),
-
         "db_file": cfg["database"]["db_file"],
-        "db_table": cfg["database"]["db_table"],
-        "db_schema": ("id", "link")
+
+        "db_table": cfg["tables"]["table1"],
+        "db_schema": (cfg["table1"]["field1"], cfg["table1"]["field2"])
     }
 
     error_message_format = """
