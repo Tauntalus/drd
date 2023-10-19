@@ -5,6 +5,21 @@ from random import randrange
 import database
 from stoid import stoid, idtos
 
+# titles dictionary for easy editing
+titles = {
+    "register": "Registration Complete",
+    "register-id": "Registration Complete",
+    "remove": "Removal Complete",
+    "remove-id": "Removal Complete",
+    "update": "Update Complete",
+    "update-id": "Update Complete",
+    "link-registered": "Link Already Registered",
+    "link-not-found": "Link Not Found",
+    "link-invalid": "Link Invalid",
+    "id-registered": "ID Already Registered",
+    "id-not-found": "ID Not Found",
+    "id-invalid": "ID Invalid"
+}
 
 # validate_form_data: Checks that the data is formatted properly for processing
 def validate_form_data(form_data, charset, ext_limit):
@@ -109,255 +124,59 @@ def handle_post(args, form_data, context):
                     code = 400
                     title = "Bad Request"
                     body = "The data we received from you doesn't match what we were expecting."
+                    
+                    #TODO: lotta boilerplate here, maybe a way to reduce it?
+                    # If there is any DB work we need to do, these if statements check for it and run it
+                    if args[0] in titles.keys():
+                        if args[0] == "register":
+                            if not link_flag:
+                                conn, ret, code, body, link_ext, fail_flag = register(conn, ret, context, link)
 
-                    # Anyways, with the DB connection established,
-                    # it's time to start making queries and building pages!
-                    if args[0] == "register":
-                        if not link_flag:
-                            conn, ret = database.try_execute(conn,
-                                                             "SELECT * FROM links WHERE link=?",
-                                                             link)
-                            if len(ret) > 0:
-                                code = 308
-                                body = "link-registered"
-                            else:
-                                conn, ret = database.try_execute(conn,
-                                                                 "SELECT id FROM links")
+                        elif args[0] == "register-id":
+                            if not link_flag and not ext_flag:
+                                conn, ret, code, body = register_id(conn, ret, context, link, link_id)
 
-                                # Generate new, unique ID within bounds
-                                link_id = randrange(pow(len(charset), id_limit))
-                                fails = 0
-                                while (link_id,) in ret:
-                                    link_id = randrange(pow(len(charset), id_limit))
-                                    fails += 1
+                        elif args[0] == "remove":
+                            if not link_flag:
+                                conn, ret, code, body = remove(conn, ret, link)
 
-                                # Too many fails = upgrade DB storage
-                                if fails >= fail_limit:
-                                    id_limit += 1
-                                    fail_flag = True
-                                    print("POST Handler: Too many fails during DB insertion!")
-                                    print("POST Handler: Increased ID length to %(lim)d." % {"lim": id_limit})
-                                conn, ret = database.try_insert(conn, db_table, (link_id, link))
+                        elif args[0] == "remove-id":
+                            if not ext_flag:
+                                conn, ret, code, body = remove_id(conn, ret, link_id)
 
-                                # Finally, build the HTML response
-                                link_ext = idtos(link_id, charset, id_limit)
+                        elif args[0] == "update":
+                            if not link_flag and not ext_flag:
+                                conn, ret, code, body = update(conn, ret, link, link_id)
+
+                        elif args[0] == "update-id":
+                            if not link_flag and not ext_flag:
+                                conn, ret, code, body = update_id(conn, ret, link, link_id)
+
+                        # Soft Error Pages
+                        # These pages handle "soft errors" - not severe enough to crash the server,
+                        # but notable enough to deserve a response to the client
+                        elif args[0] == "link-registered":
+                            if not link_flag:
+                                conn, ret, code, body, link_ext = link_registered(conn, ret, context, link)
+
+                        elif args[0] in ("link-not-found", "link-invalid"):
+                            if not link_flag:
                                 code = 201
-                                title = "Registration Complete"
-                                body = """
-                                <h2>Registration Complete!</h2>
-                                <br>
-                                <p>Thank you! Your link <b>(%(link)s)</b> has been registered!</p>
-                                <p>Your new short link is 
-                                    <a href="/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
-                                </p>"""
-                                inserts["link"] = link
-                                inserts["ext"] = link_ext
 
-                    elif args[0] == "register-id":
-                        if not link_flag and not ext_flag:
-                            conn, ret = database.try_execute(conn,
-                                                             "SELECT * FROM links WHERE link=? OR id=?",
-                                                             (link, link_id))
-                            if len(ret) > 0:
-                                code = 308
-                                # Because of the bijective flag during DB creation,
-                                # this check is encompassing.
-                                # We deliberately prioritize link errors over ID errors.
-                                if ret[0][1] == link or len(ret) > 1:
-                                    body = "link-registered"
-                                else:
-                                    body = "id-registered"
-                            else:
-                                conn, ret = database.try_insert(conn, db_table, (link_id, link))
+                        elif args[0] in ("id-registered", "id-not-found", "id-invalid"):
+                            if not ext_flag:
                                 code = 201
-                                title = "Registration Complete"
-                                body = """
-                                <h2>Registration Complete!</h2>
-                                <br>
-                                <p>Thank you! Your link <b>(%(link)s)</b> has been registered with the ID: %(ext)s!</p>
-                                <p>Your new short link is 
-                                    <a href="/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
-                                </p>"""
-                                inserts["link"] = link
-                                inserts["ext"] = link_ext
 
-                    elif args[0] == "remove":
-                        if not link_flag:
-                            conn, ret = database.try_execute(conn,
-                                                             "SELECT * FROM links WHERE link=?",
-                                                             link)
-                            if len(ret) <= 0:
-                                code = 308
-                                body = "link-not-found"
-                            else:
-                                conn, ret = database.try_execute(conn,
-                                                                 "DELETE FROM links WHERE link=?",
-                                                                 link)
-                                code = 201
-                                title= "Removal Complete",
-                                body = """
-                                <h2>Removal Complete!</h2>
-                                <br>
-                                <p>The link <b>(%(link)s)</b> has been removed from our database.</p>"""
-                                inserts["link"] = link
-
-                    elif args[0] == "remove-id":
-                        if not ext_flag:
-                            conn, ret = database.try_execute(conn,
-                                                             "SELECT * FROM links WHERE id=?",
-                                                             link_id)
-                            if len(ret) <= 0:
-                                code = 308
-                                body = "id-not-found"
-                            else:
-                                conn, ret = database.try_execute(conn,
-                                                                 "DELETE FROM links WHERE id=?",
-                                                                 link_id)
-                                code = 201
-                                title = "Removal Complete",
-                                body = """
-                                <h2>Removal Complete!</h2>
-                                <br>
-                                <p>The ID <b>(%(ext)s)</b> has been unregistered from our database.</p>"""
-                                inserts["ext"] = link_ext
-
-                    elif args[0] == "update":
-                        if not link_flag and not ext_flag:
-                            conn, ret = database.try_execute(conn,
-                                                             "SELECT * FROM links WHERE link=? OR id=?",
-                                                             (link, link_id))
-                            if len(ret) <= 0:
-                                code = 308
-                                body = "link-not-found"
-                            else:
-                                if ret[0][0] == link_id or len(ret) > 1:
-                                    code = 308
-                                    body = "id-registered"
-                                else:
-                                    conn, ret = database.try_execute(conn,
-                                                                     "UPDATE links SET id=?, link=? WHERE link=?",
-                                                                     (link_id, link, link))
-                                    code = 201
-                                    title = "Update Complete"
-                                    body = """
-                                    <h2>Update Complete!</h2>
-                                    <br>
-                                    <p>The link <b>(%(link)s)</b> has been moved to the address 
-                                        <a href="/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
-                                    </p>"""
-                                    inserts["link"] = link
-                                    inserts["ext"] = link_ext
-
-                    elif args[0] == "update-id":
-                        if not link_flag and not ext_flag:
-                            conn, ret = database.try_execute(conn,
-                                                             "SELECT * FROM links WHERE link=? OR id=?",
-                                                             (link, link_id))
-                            if len(ret) <= 0:
-                                code = 308
-                                body = "id-not-found"
-                            else:
-                                if ret[0][1] == link or len(ret) > 1:
-                                    code = 308
-                                    body = "link-registered"
-                                else:
-                                    conn, ret = database.try_execute(conn,
-                                                                     "UPDATE links SET id=?, link=? WHERE id=?",
-                                                                     (link_id, link, link_id))
-                                    code = 201
-                                    title = "Update Complete"
-                                    body = """
-                                    <h2>Update Complete!</h2>
-                                    <br>
-                                    <p>The Shortlink 
-                                        <a href="/%(ext)s" target="_blank"><b>%(host)s/%(ext)s</b></a>
-                                    has been moved to the address: <b>%(link)s</b>.</p>"""
-                                    inserts["link"] = link
-                                    inserts["ext"] = link_ext
-
-                    # Soft Error Pages
-                    # These pages handle "soft errors" - not severe enough to crash the server,
-                    # but notable enough to deserve a response to the client
-                    elif args[0] == "link-registered":
-                        if not link_flag:
-                            conn, ret = database.try_execute(conn,
-                                                             "SELECT * FROM links WHERE link=?",
-                                                             link)
-                            link_id = ret[0][0]
-                            link_ext = idtos(link_id, charset, id_limit)
-
-                            code = 201
-                            title = "Link Already Registered"
-                            body = """
-                            <h2>Your Link Was Already Registered.</h2>
-                            <br>
-                            <p>Your link <b>(%(link)s)</b> has already been registered in our database.</p>
-                            <p>Its short link is 
-                                <a href="%(host)s/%(ext)s"><b>%(host)s/%(ext)s</b></a>
-                            </p>
-                            <button onclick="history.back()">Go Back</button>"""
-                            inserts["link"] = link
-                            inserts["ext"] = link_ext
-
-                    elif args[0] == "link-not-found":
-                        if not link_flag:
-                            code = 201
-                            title = "Link Not Found"
-                            body ="""
-                            <h2>Your Link Was Not Found.</h2>
-                            <br>
-                            <p>The link you are trying to modify <b>(%(link)s)</b> does not appear to be in our database.</p>
-                            <button onclick="history.back()">Go Back</button> """
-                            inserts["link"] = link
-
-                    elif args[0] == "link-invalid":
-                        if not link_flag:
-                            code = 201
-                            title = "Link Invalid"
-                            body = """
-                            <h2>Your Link Was Invalid.</h2>
-                            <br>
-                            <p>Your link was invalid.</p>
-                            <button onclick="history.back()">Go Back</button>"""
-                            inserts["link"] = link
-
-                    elif args[0] == "id-registered":
-                        if not ext_flag:
-                            code = 201
-                            title = "ID Already Registered"
-                            body = """<h2>Your ID Was Already Registered.</h2><br>
-                            <p>Your chosen ID <b>(%(ext)s)</b> was already registered
-                             in our database. Sorry about that.</p>
-                            <button onclick="history.back()">Go Back</button>"""
-                            inserts["ext"] = link_ext
-
-                    elif args[0] == "id-not-found":
-                        if not ext_flag:
-                            code = 201
-                            title = "ID Not Found"
-                            body = """
-                            <h2>Your ID Was Not Found.</h2>
-                            <br>
-                            <p>The ID you are trying to modify <b>(%(ext)s)</b>
-                            doesn't seem to exist in our database.</p>
-                            <button onclick="history.back()">Go Back</button>"""
-
-                    elif args[0] == "id-invalid":
-                        if not ext_flag:
-                            code = 201
-                            title = "ID Invalid"
-                            body = """
-                            <h2>Your ID Was Invalid.</h2>
-                            <br>
-                            <p>Your chosen ID was invalid. It could be that
-                            the ID was too long or short, or contained characters
-                            other than letters.</p>
-                            <button onclick="history.back()">Go Back</button>"""
                     # Bad path! 404 time
                     else:
                         code = 404
                         title = "Page Not Found"
                         body = "It looks like the page you're looking for doesn't exist."
+
+                    # fetch title and body information provided we are returning something via a 2xx code
+                    if 200 <= code < 300:
+                        title = titles[args[0]]
+                        body = open("resources/post/" + args[0] + ".html", "r").read()
 
                     # Sanity check - if return is None, DB Query broke and we need to stop
                     if ret is None:
@@ -375,6 +194,169 @@ def handle_post(args, form_data, context):
                 code = 500
                 title = "Internal Error - Database Failed To Initialize"
                 body = "The connection to our database failed to initialize. We can't do anything without that!"
-
+    
+    inserts["link"] = link
+    inserts["ext"] = link_ext
     page = body % inserts
     return code, title, page, fail_flag
+
+# register: called when /register is given an appropriate POST request.
+# takes a context and a link, and registers the link into the shortener database
+def register(conn, ret, context, link):
+    charset = context["charset"]
+    id_limit = context["id_limit"]
+    fail_limit = context["fail_limit"]
+    db_table = context["db_table"]
+
+    code = 500
+    body = None
+    link_ext = None
+    fail_flag = False
+
+    conn, ret = database.try_execute(conn,
+                                        "SELECT * FROM links WHERE link=?",
+                                        link)
+    if len(ret) > 0:
+        code = 308
+        body = "link-registered"
+    else:
+        conn, ret = database.try_execute(conn,
+                                            "SELECT id FROM links")
+
+        # Generate new, unique ID within bounds
+        link_id = randrange(pow(len(charset), id_limit))
+        fails = 0
+        while (link_id,) in ret:
+            link_id = randrange(pow(len(charset), id_limit))
+            fails += 1
+
+        # Too many fails = upgrade DB storage
+        if fails >= fail_limit:
+            id_limit += 1
+            fail_flag = True
+            print("POST Handler: Too many fails during DB insertion!")
+            print("POST Handler: Increased ID length to %(lim)d." % {"lim": id_limit})
+        conn, ret = database.try_insert(conn, db_table, (link_id, link))
+
+        # Finally, build the HTML response
+        link_ext = idtos(link_id, charset, id_limit)
+        code = 201
+
+    return conn, ret, code, body, link_ext, fail_flag
+
+def register_id(conn, ret, context, link, link_id):
+    db_table = context["db_table"]
+
+    code = 500
+    body = None
+
+    conn, ret = database.try_execute(conn,
+                                        "SELECT * FROM links WHERE link=? OR id=?",
+                                        (link, link_id))
+    if len(ret) > 0:
+        code = 308
+        # Because of the bijective flag during DB creation,
+        # this check is encompassing.
+        # We deliberately prioritize link errors over ID errors.
+        if ret[0][1] == link or len(ret) > 1:
+            body = "link-registered"
+        else:
+            body = "id-registered"
+    else:
+        conn, ret = database.try_insert(conn, db_table, (link_id, link))
+        code = 201
+
+    return conn, ret, code, body
+
+def remove(conn, ret, link):
+    code = 500
+    body = None
+
+    conn, ret = database.try_execute(conn,
+                                    "SELECT * FROM links WHERE link=?",
+                                    link)
+    if len(ret) <= 0:
+        code = 308
+        body = "link-not-found"
+    else:
+        conn, ret = database.try_execute(conn,
+                                        "DELETE FROM links WHERE link=?",
+                                        link)
+        code = 201
+    
+    return conn, ret, code, body
+
+def remove_id(conn, ret, link_id):
+    conn, ret = database.try_execute(conn,
+                                    "SELECT * FROM links WHERE id=?",
+                                    link_id)
+    if len(ret) <= 0:
+        code = 308
+        body = "id-not-found"
+    else:
+        conn, ret = database.try_execute(conn,
+                                        "DELETE FROM links WHERE id=?",
+                                        link_id)
+        code = 201
+    
+    return conn, ret, code, body
+
+def update(conn, ret, link, link_id):
+    code = 500
+    body = None
+
+    conn, ret = database.try_execute(conn,
+                                    "SELECT * FROM links WHERE link=? OR id=?",
+                                    (link, link_id))
+    if len(ret) <= 0:
+            code = 308
+            body = "link-not-found"
+    else:
+        if ret[0][0] == link_id or len(ret) > 1:
+            code = 308
+            body = "id-registered"
+        else:
+            conn, ret = database.try_execute(conn,
+                                            "UPDATE links SET id=?, link=? WHERE link=?",
+                                            (link_id, link, link))
+            code = 201
+
+    return conn, ret, code, body
+
+def update_id(conn, ret, link, link_id):
+    code = 500
+    body = None
+
+    conn, ret = database.try_execute(conn,
+                                    "SELECT * FROM links WHERE link=? OR id=?",
+                                    (link, link_id))
+    if len(ret) <= 0:
+        code = 308
+        body = "id-not-found"
+    else:
+        if ret[0][1] == link or len(ret) > 1:
+            code = 308
+            body = "link-registered"
+        else:
+            conn, ret = database.try_execute(conn,
+                                            "UPDATE links SET id=?, link=? WHERE id=?",
+                                            (link_id, link, link_id))
+            code = 201
+    
+    return conn, ret, code, body
+
+def link_registered(conn, ret, context, link):
+    charset = context["charset"]
+    id_limit = context["id_limit"]
+
+    code = 500
+    body = None
+    conn, ret = database.try_execute(conn,
+                                    "SELECT * FROM links WHERE link=?",
+                                    link)
+    link_id = ret[0][0]
+    link_ext = idtos(link_id, charset, id_limit)
+
+    code = 201
+
+    return conn, ret, code, body, link_ext
