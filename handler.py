@@ -55,7 +55,6 @@ class Handler(BaseHTTPRequestHandler):
     def send_resource(self, code, content):
         page = content
         self.send_response(code)
-        self.send_header("Content-type", "text/css")
         self.send_header('Connection', 'close')
         self.send_header('Content-Length', int(len(page)))
         self.end_headers()

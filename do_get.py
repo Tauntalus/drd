@@ -43,19 +43,9 @@ def handle_get(args, context):
             title = titles[args[0]]
             body = open("resources/get/" + args[0] + ".html", "r").read()
 
-        # If trying to get a resource, shortcut the system
-        elif args[0] == "resources":
-            # rebuild filepath
-            file_path = ""
-            for e in args:
-                file_path += e + "/"
-            file_path = file_path[:-1]
-            if isfile("./"+ file_path):
-                code = 200
-                title = file_path
-                body = open(file_path, "r").read()
-                return code, title, body
-            
+        #Teapot :D
+        elif args[0] == "teapot":
+            code = 418
 
         elif args[0].isalpha() and len(args[0]) <= id_limit:
             conn = database.try_connect_db(db_file)
@@ -88,9 +78,19 @@ def handle_get(args, context):
                 title = "Internal Error - Database Failed To Initialize"
                 body = "The connection to our database failed to initialize. We can't do anything without that!"
 
-        #Teapot :D
-        if args[0] == "teapot":
-            code = 418
+        # If trying to get a resource, shortcut the system
+        else:
+            # rebuild filepath
+            file_path = ""
+            for e in args:
+                file_path += e + "/"
+            file_path = file_path[:-1]
+            print(file_path)
+            if isfile("./"+ file_path):
+                code = 200
+                title = file_path
+                body = open(file_path, "r").read()
+                return code, title, body
 
     page = body % inserts
     return code, title, page
