@@ -50,7 +50,6 @@ def handle_get(args, context):
             for e in args:
                 file_path += e + "/"
             file_path = file_path[:-1]
-            print(file_path)
             if isfile("./"+ file_path):
                 code = 200
                 title = file_path

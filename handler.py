@@ -91,7 +91,8 @@ class Handler(BaseHTTPRequestHandler):
         elif 200 <= code < 300:
             if isfile("./" + title):
                 self.send_resource(code, body)
-            self.send_page(code, title, body)
+            else:
+                self.send_page(code, title, body)
             return
         # Redirect responses - body contains linked resource
         elif 300 <= code < 400:
