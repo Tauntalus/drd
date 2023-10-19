@@ -6,6 +6,7 @@ import configparser
 def main():
     # Get server info from .ini file
     cfg = configparser.ConfigParser()
+    cfg.read("settings.ini")
     host = cfg["site"]["host"]
     port = int(cfg["site"]["port"])
 

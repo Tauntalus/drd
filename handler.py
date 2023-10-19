@@ -1,22 +1,25 @@
 from http.server import BaseHTTPRequestHandler
 from do_get import handle_get
 from do_post import handle_post
+import configparser
 
 # Handler: Custom HTTP Request Handler
 class Handler(BaseHTTPRequestHandler):
+    cfg = configparser.ConfigParser()
+    cfg.read("settings.ini")
 
     # This object contains all the relevant context
     # needed for dynamic request responses.
     context = {
-        "name": "Domain ReDirector",
-        "host": "localhost",
+        "name": cfg["site"]["name"],
+        "host": cfg["site"]["host"],
 
-        "charset": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        "id_limit": 3,
-        "fail_limit": 100,
+        "charset": cfg["database"]["charset"],
+        "id_limit": int(cfg["database"]["id_limit"]),
+        "fail_limit": int(cfg["database"]["fail_limit"]),
 
-        "db_file": "db/drd.db",
-        "db_table": "links",
+        "db_file": cfg["database"]["db_file"],
+        "db_table": cfg["database"]["db_table"],
         "db_schema": ("id", "link")
     }
 
