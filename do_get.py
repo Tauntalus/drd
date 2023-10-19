@@ -2,6 +2,18 @@ import database
 from stoid import stoid
 from os.path import isfile
 
+# Dictionary for easy editing of page titles
+titles = {
+    "index": "Main Page",
+    "register": "Register A Link",
+    "register-id": "Register A Shortlink",
+    "remove": "Remove A Link",
+    "remove-id": "Remove A Shortlink",
+    "update": "Update A Link",
+    "update-id": "Update A Shortlink",
+    "teapot": "I'm a Teapot!"
+}
+
 # handle_get: Accepts args[] representing a split URL and returns
 # a HTTP response <code>, a page <title>, and a page <body>
 # TODO: Move HTML pages to external resource
@@ -21,18 +33,6 @@ def handle_get(args, context):
     code = 404
     title = "Page Not Found"
     body = "It looks like the page you're looking for doesn't exist."
-
-    # Dictionary for easy editing of page titles
-    titles = {
-        "index": "Main Page",
-        "register": "Register A Link",
-        "register-id": "Register A Shortlink",
-        "remove": "Remove A Link",
-        "remove-id": "Remove A Shortlink",
-        "update": "Update A Link",
-        "update-id": "Update A Shortlink",
-        "teapot": "I'm a Teapot!"
-    }
 
     if len(args) > 0:
         if args[0] in ('', "main", "index"):
