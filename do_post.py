@@ -354,7 +354,7 @@ def link_registered(conn, ret, context, link):
 
     code = 500
     body = None
-    
+
     conn, ret = database.try_execute(conn,
                                     "SELECT * FROM links WHERE link=?",
                                     link)
